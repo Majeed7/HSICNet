@@ -336,7 +336,7 @@ if __name__=='__main__':
             del book[ds_name]
         
         # Write the DataFrame to a new sheet
-        with pd.ExcelWriter(output_file, engine="openpyxl", mode="a") as writer:
+        with pd.ExcelWriter(output_file, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
             df.to_excel(writer, index=False, sheet_name=ds_name)
 
 
