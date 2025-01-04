@@ -22,7 +22,15 @@ from sklearn.linear_model import LinearRegression
 import torch 
 
 from explainers.L2x_reg import *
+import os
 
+# Define the output Excel file
+output_file = "method_stats.xlsx"
+
+# Check if the file exists to determine if it needs to be created or updated
+if not os.path.exists(output_file):
+    # Create an empty Excel file if it doesn't exist
+    pd.DataFrame().to_excel(output_file, index=False)
 
 # Create a wrapper class for 'fn' 
 class CustomModel:
@@ -124,7 +132,6 @@ def compute_statistics(binary_array, ground_truth_indices):
         FN += len(ground_truth_set - selected_indices)  # False Negatives
     
     return TP, FP, TN, FN
-
 
 def weight_to_binary(weight_values, n):
     """
@@ -294,11 +301,44 @@ if __name__=='__main__':
         X_train, y_train, fn, feature_imp, g_train = generate_dataset(ds_name, num_samples, input_dim, train_seed)
         # X_test, y_test, fn, feature_imp, g_test = generate_dataset(ds_name, num_samples, input_dim, test_seed)
         
-        HSICFNGS_stats, HSICFNGS2_stats, HSIC_gumbsparsemax_stats, HSIC_gumbsparsemax2_stats, \
-        HSIC_gumbsoftmax_stats, HSIC_gumbsoftmax2_stats, HSIC_sparsemax_stats, invase_stats, \
-        L2x_stats, l2x_2_stats, shap_stats, bishap_stats, lime_stats = Compare_methods(
-            X_train, y_train, X_train, X_sample_no, fn, feature_imp)
+        #HSICFNGS_stats, HSICFNGS2_stats, HSIC_gumbsparsemax_stats, HSIC_gumbsparsemax2_stats, \
+        #HSIC_gumbsoftmax_stats, HSIC_gumbsoftmax2_stats, HSIC_sparsemax_stats, invase_stats, \
+        #L2x_stats, l2x_2_stats, shap_stats, bishap_stats, lime_stats = Compare_methods(X_train, y_train, X_train, X_sample_no, fn, feature_imp)
         
+        stats = Compare_methods(X_train, y_train, X_train, X_sample_no, fn, feature_imp)
+    
+    # Methods names corresponding to the stats
+        methods = [
+            "HSIC_FN_GS", "HSIC_FN_GS2", "HSIC_gumbsparsemax", "HSIC_gumbsparsemax2",
+            "HSIC_gumbsoftmax", "HSIC_gumbsoftmax2", "HSIC_sparsemax", "invase",
+            "L2x", "l2x_2", "shap", "bishap", "lime"
+        ]
+        
+        # Prepare data for the DataFrame
+        data = []
+        for method, stat in zip(methods, stats):
+            data.append({
+                "Method": method,
+                "TP": stat[0],
+                "FP": stat[1],
+                "TN": stat[2],
+                "FN": stat[3],
+            })
+        
+        # Create a DataFrame
+        df = pd.DataFrame(data)
+        
+        # Load the existing Excel file
+        book = load_workbook(output_file)
+        
+        # Remove the sheet if it already exists
+        if ds_name in book.sheetnames:
+            del book[ds_name]
+        
+        # Write the DataFrame to a new sheet
+        with pd.ExcelWriter(output_file, engine="openpyxl", mode="a") as writer:
+            df.to_excel(writer, index=False, sheet_name=ds_name)
+
 
         print("done!")
 
