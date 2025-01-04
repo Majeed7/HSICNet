@@ -32,7 +32,7 @@ print("CUDA available:", torch.cuda.is_available())
 print("CUDA version:", torch.version.cuda)
 
 # Define the output Excel file
-output_file = "method_stats.xlsx"
+output_file = "method_stats_full.xlsx"
 
 # Check if the file exists to determine if it needs to be created or updated
 if not os.path.exists(output_file):
@@ -167,7 +167,7 @@ def Compare_methods(X, y, X_test, X_sample_no, fn, feature_imp):
     n, d = X.shape
     input_dim = d
 
-    epoch = 1
+    epoch = 500
 
     X_tensor = torch.tensor(X, dtype=torch.float32)# torch.from_numpy(X).float()  # Convert to float tensor
     y_tensor = torch.tensor(y, dtype=torch.float32)  # Create float tensor directly from list or other data type
@@ -250,7 +250,7 @@ def Compare_methods(X, y, X_test, X_sample_no, fn, feature_imp):
     l2x_2_stats = compute_statistics(L2X_2_selected_features, feature_imp)
     
     ## SHAP
-    X_tbx = X[:20,:]
+    X_tbx = X[:200,:]
     X_bg = shap.sample(X, 100)
     explainer = shap.KernelExplainer(fn, X_bg)
     shap_values = explainer.shap_values(X_tbx, nsamples=X_sample_no, l1_reg=True)
@@ -289,17 +289,17 @@ if __name__=='__main__':
     input_dim = 20 # number of features for the synthesized instances
     hidden_dim1 = 100
     hidden_dim2 = 100
-    X_sample_no = 200  # number of sampels for generating explanation
+    X_sample_no = 500  # number of sampels for generating explanation
     train_seed = 42
     test_seed = 1
     Threshold = 0.01
 
    
-    # data_sets=['Sine Log', 'Sine Cosine', 'Poly Sine', 'Squared Exponentials', 'Tanh Sine', 
-    #          'Trigonometric Exponential', 'Exponential Hyperbolic', 'XOR', 'Syn4']
+    data_sets=['Sine Log', 'Sine Cosine', 'Poly Sine', 'Squared Exponentials', 'Tanh Sine', 
+              'Trigonometric Exponential', 'Exponential Hyperbolic', 'XOR']
     # ds_name = data_sets[1]
     # data_sets= ['Syn4']
-    data_sets=['Squared Exponentials']
+    #data_sets=['Squared Exponentials']
 
     for ds_name in data_sets:
         ## Not good: Trigonometric Exponential (INVASE not good either), XOR,
