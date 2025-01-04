@@ -24,6 +24,9 @@ import torch
 from explainers.L2x_reg import *
 import os
 
+import warnings
+warnings.filterwarnings("ignore")
+
 # Define the output Excel file
 output_file = "method_stats.xlsx"
 
