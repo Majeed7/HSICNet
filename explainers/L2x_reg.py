@@ -78,9 +78,10 @@ class L2XModel(nn.Module):
         
         return preds, samples
 
-def train_L2X(X_train, y_train, input_shape, num_feature_imp, X_test, epochs=300, batch_size=BATCH_SIZE):
+def train_L2X(X_train, y_train, num_feature_imp, epochs=300, batch_size=BATCH_SIZE):
     # Initialize model
-    model = L2XModel(input_shape=input_shape, num_feature_imp=num_feature_imp)
+    n, d = X_train.shape
+    model = L2XModel(input_shape=d, num_feature_imp=num_feature_imp)
     
     # Define loss and optimizer
     criterion = nn.MSELoss()
@@ -101,10 +102,7 @@ def train_L2X(X_train, y_train, input_shape, num_feature_imp, X_test, epochs=300
             optimizer.step()
 
     # Inference: Generate feature scores for test set
-    model.eval()
-    X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
-    with torch.no_grad():
-        _, feature_scores = model(X_test_tensor, training=False)
+    _, feature_scores = model(torch.tensor(X_train, dtype=torch.float32), training=False)
 
     return feature_scores.cpu().numpy()
 

@@ -21,7 +21,6 @@ class HSICNet(nn.Module):
         super().__init__()
 
         self.layers = nn.ModuleList()
-        self.batch_norms = nn.ModuleList()
 
         self.layers.append((nn.Linear(input_dim, layers[0])))
 
@@ -42,6 +41,9 @@ class HSICNet(nn.Module):
             x = layer(x)
             
             if i < len(self.layers) - 1:  # Apply activation function to all but the last layer
+                # if isinstance(self.activation_func, nn.Sigmoid):
+                #     batch_norm = nn.BatchNorm1d(x.size(1))
+                #     x = batch_norm(x)
                 x = self.activation_func(x)
         
         return x
@@ -134,8 +136,8 @@ class HSICNet(nn.Module):
         n = X.size(0)
         H = torch.eye(n).to(X.device) - (1 / n) * torch.ones(n, n).to(X.device)
 
-        X_centered = H @ X_kernel 
-        y_centered = H @ y_kernel 
+        X_centered = H @ X_kernel @ H
+        y_centered = H @ y_kernel @ H
 
         # HSIC value with proper scaling
         hsic_value = torch.trace(X_centered @ y_centered) / n ** 2

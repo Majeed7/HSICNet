@@ -7,13 +7,55 @@ import matplotlib.pyplot as plt
 data_names=['Sine Log', 'Sine Cosine', 'Poly Sine', 'Squared Exponentials', 'Tanh Sine', 
             'Trigonometric Exponential', 'Exponential Hyperbolic', 'XOR', 'Syn4']
 
-def generate_X(n_samples=100, n_features=10):
-    # Generate samples with a standard normal distribution
-    return np.random.randn(n_samples, n_features)
+#def generate_X(n_samples=100, n_features=10):
+#    import numpy as np
 
-def generate_dataset_sinlog(n_samples=100, n_features=10, seed=42):
+def generate_X(num_samples, num_features, influential_indices, correlation_value=0.6):
+    # Generate samples with a standard normal distribution
+    #return np.random.randn(num_samples, num_features)
+    """
+    Generate synthetic data where specified influential features are correlated with unique non-influential features.
+
+    Parameters:
+    - num_samples: int, number of samples.
+    - num_features: int, total number of features.
+    - influential_indices: list of int, indices of influential features.
+    - correlation_value: float, correlation value between paired features.
+
+    Returns:
+    - data: np.ndarray, generated synthetic data.
+    """
+    num_influential = len(influential_indices)
+    non_influential_indices = list(set(range(num_features)) - set(influential_indices))
+
+    assert num_influential <= len(non_influential_indices), (
+        "Number of non-influential features must be >= number of influential features."
+    )
     
-    X = generate_X(n_samples, n_features)
+    # Initialize covariance matrix (identity matrix)
+    cov_matrix = np.eye(num_features)
+    
+    # Assign correlations between each influential feature and a unique non-influential feature
+    for i, inf_idx in enumerate(influential_indices):
+        non_inf_idx = non_influential_indices[i]
+        cov_matrix[inf_idx, non_inf_idx] = correlation_value
+        cov_matrix[non_inf_idx, inf_idx] = correlation_value  # Symmetry
+    
+    # Check positive definiteness of the covariance matrix
+    if not np.all(np.linalg.eigvals(cov_matrix) > 0):
+        raise ValueError("Covariance matrix is not positive definite. Adjust correlations or feature setup.")
+    
+    # Generate mean vector
+    mean = np.zeros(num_features)
+    
+    # Generate data with correlation
+    data = np.random.multivariate_normal(mean, cov_matrix, size=num_samples)
+    
+    return data
+
+def generate_dataset_sinlog(n_samples=100, n_features=10):
+    influential_indices = np.arange(0, 2) 
+    X = generate_X(n_samples, n_features, influential_indices = influential_indices, correlation_value=0.6)
 
     def fn(X):
         f1, f2 = X[:, 0], X[:, 1]
@@ -31,15 +73,15 @@ def generate_dataset_sinlog(n_samples=100, n_features=10, seed=42):
 
     y = fn(X)
     
-    return X, y, fn, np.arange(0, 2), 'Sine Log'
+    return X, y, fn, influential_indices, 'Sine Log'
 
 def generate_dataset_sin(n_samples=100, n_features=10, noise=0.1, seed=42):
     """
     Args:
         noise (float): Standard deviation of Gaussian noise to add to the output. 
     """
-    
-    X = generate_X(n_samples, n_features)
+    influential_indices = np.arange(0, 2)
+    X = generate_X(n_samples, n_features, influential_indices=influential_indices, correlation_value=0.6)
 
     def fn(X):
         f1, f2 = X[:, 0], X[:, 1]
@@ -61,11 +103,11 @@ def generate_dataset_sin(n_samples=100, n_features=10, noise=0.1, seed=42):
 
     y = fn(X)
     
-    return X, y, fn, np.arange(0, 2), 'Sine Cosine'
+    return X, y, fn, influential_indices, 'Sine Cosine'
 
 def generate_dataset_poly_sine(n_samples=100, n_features=10, seed=42):
-    
-    X = generate_X(n_samples, n_features)
+    influential_indices = np.arange(0, 2)
+    X = generate_X(n_samples, n_features, influential_indices=influential_indices, correlation_value=0.6)
 
     def fn(X):
         f1, f2 = X[:, 0], X[:, 1]
@@ -77,11 +119,11 @@ def generate_dataset_poly_sine(n_samples=100, n_features=10, seed=42):
 
     y = fn(X)
     
-    return X, y, fn, np.arange(0, 2), 'Poly Sine'
+    return X, y, fn, influential_indices, 'Poly Sine'
 
 def generate_dataset_squared_exponentials(n_samples=100, n_features=10, seed=42):
-    
-    X = generate_X(n_samples, n_features)
+    influential_indices = np.arange(0, 3)
+    X = generate_X(n_samples, n_features, influential_indices=influential_indices, correlation_value=0.6)
 
     def fn(X):
         # Compute a function based on squared exponentials of the first 2 features
@@ -91,13 +133,13 @@ def generate_dataset_squared_exponentials(n_samples=100, n_features=10, seed=42)
 
     y = fn(X)
     
-    return X, y, fn, np.arange(0, 3), 'Squared Exponentials'
+    return X, y, fn, influential_indices, 'Squared Exponentials'
 
 # These functions are for more than 3 features
 
 def generate_dataset_complex_tanhsin(n_samples=1000, n_features=10, seed=42):
-    
-    X = generate_X(n_samples, n_features)
+    influential_indices = np.arange(0, 3)
+    X = generate_X(n_samples, n_features, influential_indices=influential_indices, correlation_value=0.6)
 
     def fn(X):
         f1, f2, f3 = X[:, 0], X[:, 1], X[:, 2]
@@ -116,28 +158,28 @@ def generate_dataset_complex_tanhsin(n_samples=1000, n_features=10, seed=42):
 
     y = fn(X)
     
-    return X, y, fn, np.arange(0, 3), 'Tanh Sine'
+    return X, y, fn, influential_indices, 'Tanh Sine'
 
 def generate_dataset_complex_trig_exp(n_samples=100, n_features=10, seed=42):
-    
-    X = generate_X(n_samples, n_features)
+    influential_indices = np.arange(0, 4)
+    X = generate_X(n_samples, n_features, influential_indices=influential_indices, correlation_value=0.6)
 
     def fn(X):
         f1, f2, f3, f4 = X[:, 0], X[:, 1], X[:, 2], X[:, 3]
 
         # Complex non-linear interactions
-        y = np.sin(f1) * np.exp(f2) + np.cos(f3 * f4) * np.tanh(f1 * f2)
-        y += np.exp(-(f1**2 + f2**2)) * np.sin(f3 + f4)
+        y = np.sin(f1) * np.exp(f2) + np.cos(f3 * f4) * np.tanh(f1 * f2 * np.pi)
+        y += np.exp(-(f1**2 + f2**2)) * np.sin((f3 + f4)*np.pi)
 
         return y
 
     y = fn(X)
 
-    return X, y, fn, np.arange(0, 4), 'Trigonometric Exponential'
+    return X, y, fn, influential_indices, 'Trigonometric Exponential'
 
 def generate_dataset_complex_exponential_hyperbolic(n_samples=100, n_features=10, seed=42):
-    
-    X = generate_X(n_samples, n_features)
+    influential_indices = np.arange(0, 4)
+    X = generate_X(n_samples, n_features, influential_indices=influential_indices, correlation_value=0.6)
 
     def fn(X):
         f1, f2, f3, f4 = X[:, 0], X[:, 1], X[:, 2], X[:, 3]
@@ -150,26 +192,28 @@ def generate_dataset_complex_exponential_hyperbolic(n_samples=100, n_features=10
 
     y = fn(X)
     
-    return X, y, fn, np.arange(0, 4), 'Exponential Hyperbolic'
+    return X, y, fn, influential_indices, 'Exponential Hyperbolic'
 
-def generate_dataset_XOR(n_samples=100, n_features=10, seed=42):
-   
-    X = generate_X(n_samples, n_features)
+def generate_dataset_XOR(n_samples=100, n_features=10):
+    influential_indices = np.arange(0, 5)
+
+    X = generate_X(n_samples, n_features, influential_indices=influential_indices, correlation_value=0.6)
 
     def fn(X):
         f1, f2, f3, f4, f5 = X[:, 0], X[:, 1], X[:, 2], X[:, 3], X[:, 4]
 
         # Compute the target using an XOR-like interaction of features
-        y = 0.5 * (np.exp(f1 * f2 * f3) + np.exp(f4 * f5))
+        y = 0.5 * (np.exp(5*f1 * f2 * f3) + np.exp(f4 * f5))
 
         return y
 
     y = fn(X)
     
-    return X, y, fn, np.arange(0, 5), 'XOR'
+    return X, y, fn, influential_indices, 'XOR'
 
 def generate_dataset_Syn4(n_samples=100, n_features=10, seed=42):
-    X = generate_X(n_samples, n_features)
+    influential_indices = np.arange(0, 10)
+    X = generate_X(n_samples, n_features, influential_indices=influential_indices, correlation_value=0.6)
     def fn(X):
         f1, f2, f3, f4, f5 = X[:, 0], X[:, 1], X[:, 2], X[:, 3], X[:, 4]
         logit1 = np.exp(X[:,0]*X[:,1])
@@ -183,7 +227,7 @@ def generate_dataset_Syn4(n_samples=100, n_features=10, seed=42):
         return y
     y = fn(X)
 
-    return X, y, fn, np.arange(0, 8), 'XOR'
+    return X, y, fn, influential_indices, 'XOR'
 
     
 

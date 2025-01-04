@@ -1,6 +1,9 @@
 import torch.nn.functional as F
 import torch
 import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+
 from HSICNet.HSICNet import HSICNet
 from sparsemax import Sparsemax
 
@@ -35,6 +38,8 @@ class HSICFeatureNet(HSICNet):
 
         for layer_size in layers:
             net.append(nn.Linear(input_size, layer_size))
+            if self.act_fun_featlayer == nn.Sigmoid:
+                net.append(nn.BatchNorm1d(layer_size))
             net.append(self.act_fun_featlayer())  # Use activation by default
             input_size = layer_size
 
@@ -46,9 +51,29 @@ class HSICFeatureNet(HSICNet):
         feature_transformed = [net(x[:, i:i+1]) for i, net in enumerate(self.feature_nets)]
         feature_transformed = torch.cat(feature_transformed, dim=1)  # Concatenate transformed features
         
-        super(HSICFeatureNet, self).forward(feature_transformed)
+        logit = super(HSICFeatureNet, self).forward(feature_transformed)
 
-        return feature_transformed
+        return logit, feature_transformed
+
+    def train_model(self, X, y, num_epochs=300, lr=1e-3, BATCH_SIZE = 100):
+        
+        optimizer = optim.Adam(self.parameters(), lr=lr)
+        train_dataset = TensorDataset(X, y)
+        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+
+        for epoch in range(num_epochs):
+            self.train()
+            for inputs, outputs in train_loader:
+                optimizer.zero_grad()
+
+                s, sigmas, sigma_y, features_net = self(inputs)  # importance weights from Gumbel-Softmax
+                loss = -self.hsic_loss_adaptive(features_net, outputs, s, sigmas, sigma_y)  # Minimize negative HSIC
+
+                loss.backward()
+                optimizer.step()
+
+                if (epoch + 1) % 50 == 0:
+                    print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {loss.item()}")
 
 
 """
@@ -63,11 +88,11 @@ class HSICFeatureNetGumbelSparsemax(HSICFeatureNet):
         self.temperature = temperature
         
     def forward(self, x):
-        logits = super(HSICFeatureNetGumbelSparsemax, self).forward(x)
+        logits, feature_transformed = super(HSICFeatureNetGumbelSparsemax, self).forward(x)
 
         self.importance_weights = self.gumbel_sparsemax_sampling(logits, temperature=self.temperature, num_samples = self.num_samples)
 
-        return self.importance_weights, self.sigmas, self.sigma_y
+        return self.importance_weights, self.sigmas, self.sigma_y, feature_transformed
 
 
 """
