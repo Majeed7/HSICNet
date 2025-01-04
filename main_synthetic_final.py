@@ -27,6 +27,10 @@ import os
 import warnings
 warnings.filterwarnings("ignore")
 
+import torch
+print("CUDA available:", torch.cuda.is_available())
+print("CUDA version:", torch.version.cuda)
+
 # Define the output Excel file
 output_file = "method_stats.xlsx"
 
