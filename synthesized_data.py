@@ -12,7 +12,7 @@ data_names=['Sine Log', 'Sine Cosine', 'Poly Sine', 'Squared Exponentials', 'Tan
 
 def generate_X(num_samples, num_features, influential_indices, correlation_value=0.6):
     # Generate samples with a standard normal distribution
-    #return np.random.randn(num_samples, num_features)
+    return np.random.randn(num_samples, num_features)
     """
     Generate synthetic data where specified influential features are correlated with unique non-influential features.
 
@@ -227,9 +227,7 @@ def generate_dataset_Syn4(n_samples=100, n_features=10, seed=42):
         return y
     y = fn(X)
 
-    return X, y, fn, influential_indices, 'XOR'
-
-    
+    return X, y, fn, influential_indices, 'XOR' 
 
 def generate_dataset(data_name, n_samples=100, n_features=10, seed = 0):
     np.random.seed(seed)
@@ -254,7 +252,6 @@ def generate_dataset(data_name, n_samples=100, n_features=10, seed = 0):
     
     Ground_Truth = Ground_Truth_Generation(X, data_name)
     return X, y, fn, feature_imp, Ground_Truth
-
 
 def Ground_Truth_Generation(X, data_name):
 

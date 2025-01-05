@@ -32,7 +32,7 @@ print("CUDA available:", torch.cuda.is_available())
 print("CUDA version:", torch.version.cuda)
 
 # Define the output Excel file
-output_file = "method_stats_full.xlsx"
+output_file = "method_stats_full_independent.xlsx"
 
 # Check if the file exists to determine if it needs to be created or updated
 if not os.path.exists(output_file):
