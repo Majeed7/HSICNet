@@ -34,7 +34,7 @@ if __name__ == '__main__':
     np.random.seed(30)
 
     sample_no_gn = 2000 # number of generated synthesized instances 
-    feature_no_gn = 20 # number of features for the synthesized instances
+    feature_no_gn = 10 # number of features for the synthesized instances
 
     exp_no = 2 # number of experiments
     importance_mi = np.zeros((exp_no,feature_no_gn))
