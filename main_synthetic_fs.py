@@ -34,9 +34,9 @@ if __name__ == '__main__':
     np.random.seed(30)
 
     sample_no_gn = 2000 # number of generated synthesized instances 
-    feature_no_gn = 10 # number of features for the synthesized instances
+    feature_no_gn = 16 # number of features for the synthesized instances
 
-    exp_no = 2 # number of experiments
+    exp_no = 30 # number of experiments
     importance_mi = np.zeros((exp_no,feature_no_gn))
     importance_lasso = np.zeros((exp_no,feature_no_gn))
     orders_rfecv = np.zeros((exp_no,feature_no_gn))
@@ -122,7 +122,7 @@ if __name__ == '__main__':
             hsic_ind = hsic_lasso.get_index()
             init_ranks = (len(hsic_ind) + (feature_no_gn - 1/2 - len(hsic_ind))/2) * np.ones((feature_no_gn,))
             init_ranks[hsic_ind] = np.arange(1,len(hsic_ind)+1)
-            importance_hsiclasso[i,:] = hsicgs2_sv.detach().numpy().squeeze()  
+            importance_hsiclasso[i,:] = hsicgs_sv.detach().numpy().squeeze()  
             time_hsiclasso[i] = time.time() - start_time 
 
             ## Mutual Informmation Importance
