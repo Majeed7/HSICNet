@@ -33,7 +33,7 @@ if not os.path.exists(results_xsl):
 if __name__ == '__main__':
     np.random.seed(30)
 
-    sample_no_gn = 2000 # number of generated synthesized instances 
+    sample_no_gn = 1000 # number of generated synthesized instances 
     feature_no_gn = 16 # number of features for the synthesized instances
 
     exp_no = 30 # number of experiments
