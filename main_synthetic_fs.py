@@ -28,14 +28,14 @@ if not os.path.exists(results_xsl):
     # Create an empty Excel file if it doesn't exist
     pd.DataFrame().to_excel(results_xsl, index=False)
 
-'''
+
 if __name__ == '__main__':
     np.random.seed(30)
 
     sample_no_gn = 1000 # number of generated synthesized instances 
     feature_no_gn = 16 # number of features for the synthesized instances
 
-    exp_no = 30 # number of experiments
+    exp_no = 1 # number of experiments
     importance_mi = np.zeros((exp_no,feature_no_gn))
     importance_lasso = np.zeros((exp_no,feature_no_gn))
     orders_rfecv = np.zeros((exp_no,feature_no_gn))
@@ -182,5 +182,3 @@ if __name__ == '__main__':
         # Write the DataFrame to a new sheet
         with pd.ExcelWriter(results_xsl, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
             df.to_excel(writer, index=False, sheet_name=ds_name)
-
-'''
