@@ -73,25 +73,6 @@ def create_rank(scores):
 
 	return np.array(ranks)
 
-# def performance_tp_fp(ranks, g_truth):
-
-#     exists_features = np.zeros_like(ranks)
-#     exists_features[np.argsort(ranks)[:np.sum(g_truth)]] = 1  # Predict top k ranked items as 1 (positive)
-
-#     # True Positives (TP): Where both prediction and ground truth are 1
-#     TP = np.sum((g_truth == 1) & (exists_features == 1))
-
-#     # False Positives (FP): Where prediction is 1 but ground truth is 0
-#     FP = np.sum((g_truth == 0) & (exists_features == 1))
-#     return TP, FP
-
-
-# def sort_shap_values(scores, k):
-#     scores = np.abs(scores)
-#     # Sort the array by absolute values in descending order and take the top two
-#     top_k = scores[np.argsort(-scores)[:k]]
-#     return 
-
 def create_important_features_existence(ranks, g_truth):
     ''' ranks is the rank of each feature'''
     ''' This function finds the indices of the top k ranked features and 
@@ -108,8 +89,6 @@ def convert_Scores_to_impfExistence(score_init, Threshold):
     score_abs=abs(score_init)
     score = 1.*(score_abs > Threshold)    
     return score
-
-import numpy as np
 
 def compute_statistics(binary_array, ground_truth_indices):
     """
@@ -162,7 +141,6 @@ def weight_to_binary(weight_values, n):
 
     return binary_vectors if weight_values.shape[0] > 1 else binary_vectors[0]
     
-
 def Compare_methods(X, y, X_test, X_sample_no, fn, feature_imp):
     n, d = X.shape
     input_dim = d

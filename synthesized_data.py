@@ -10,9 +10,29 @@ data_names=['Sine Log', 'Sine Cosine', 'Poly Sine', 'Squared Exponentials', 'Tan
 #def generate_X(n_samples=100, n_features=10):
 #    import numpy as np
 
+def create_rank(scores): 
+	"""
+	Compute rank of each feature based on weight.
+	
+	"""
+	scores = abs(scores)
+	n, d = scores.shape
+	ranks = []
+	for i, score in enumerate(scores):
+		# Random permutation to avoid bias due to equal weights.
+		idx = np.random.permutation(d) 
+		permutated_weights = score[idx]  
+		permutated_rank=(-permutated_weights).argsort().argsort()+1
+		rank = permutated_rank[np.argsort(idx)]
+
+		ranks.append(rank)
+
+	return np.array(ranks)
+
+
 def generate_X(num_samples, num_features, influential_indices, correlation_value=0.6):
     # Generate samples with a standard normal distribution
-    return np.random.randn(num_samples, num_features)
+    #return np.random.randn(num_samples, num_features)
     """
     Generate synthetic data where specified influential features are correlated with unique non-influential features.
 
