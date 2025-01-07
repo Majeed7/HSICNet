@@ -5,7 +5,7 @@ from sklearn.linear_model import Lasso
 from sklearn.svm import SVC, SVR
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.feature_selection import SelectKBest, f_classif, f_regression
-from pyHSICLasso import HSICLasso
+#from pyHSICLasso import HSICLasso
 from pathlib import Path
 import os 
 from openpyxl import load_workbook
@@ -115,15 +115,15 @@ if __name__ == '__main__':
             time_hsicgs2[i] = time.time() - start_time
             '''
             ## HSIC lasso 
-            start_time = time.time()
-            hsic_lasso = HSICLasso()
-            hsic_lasso.input(X,y)
-            hsic_lasso.regression(feature_no_gn, covars=X)
-            hsic_ind = hsic_lasso.get_index()
-            init_ranks = (len(hsic_ind) + (feature_no_gn - 1/2 - len(hsic_ind))/2) * np.ones((feature_no_gn,))
-            init_ranks[hsic_ind] = np.arange(1,len(hsic_ind)+1)
-            importance_hsiclasso[i,:] = hsicgs_sv.detach().numpy().squeeze()  
-            time_hsiclasso[i] = time.time() - start_time 
+            # start_time = time.time()
+            # hsic_lasso = HSICLasso()
+            # hsic_lasso.input(X,y)
+            # hsic_lasso.regression(feature_no_gn, covars=X)
+            # hsic_ind = hsic_lasso.get_index()
+            # init_ranks = (len(hsic_ind) + (feature_no_gn - 1/2 - len(hsic_ind))/2) * np.ones((feature_no_gn,))
+            # init_ranks[hsic_ind] = np.arange(1,len(hsic_ind)+1)
+            # importance_hsiclasso[i,:] = hsicgs_sv.detach().numpy().squeeze()  
+            # time_hsiclasso[i] = time.time() - start_time 
 
             ## Mutual Informmation Importance
             start_time = time.time()
