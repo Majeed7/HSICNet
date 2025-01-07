@@ -28,7 +28,7 @@ import torch
 print("CUDA available:", torch.cuda.is_available())
 print("CUDA version:", torch.version.cuda)
 
-results_xsl = Path('fs_synthesized.xlsx')
+results_xsl = Path('hsic_fs_synthesized.xlsx')
 if not os.path.exists(results_xsl):
     # Create an empty Excel file if it doesn't exist
     pd.DataFrame().to_excel(results_xsl, index=False)
