@@ -1,17 +1,13 @@
-from sklearn.feature_selection import mutual_info_classif, RFECV, SelectKBest, chi2, mutual_info_regression
+from sklearn.feature_selection import mutual_info_classif, RFECV, SelectKBest, mutual_info_regression
 from synthesized_data import *
 from sklearn.linear_model import Lasso
-from sklearn.feature_selection import SelectFromModel
 from sklearn.svm import SVC, SVR
-from sklearn.model_selection import StratifiedKFold
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
-import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.feature_selection import SelectKBest, f_classif, f_regression
 import numpy as np
 #from pyHSICLasso import HSICLasso
 from pathlib import Path
-from datetime import datetime
 import os 
 from openpyxl import load_workbook
 import time
@@ -21,8 +17,8 @@ from HSICNet.HSICNet import *
 
 from synthesized_data import *
 
-import warnings
-warnings.filterwarnings("ignore")
+#import warnings
+#warnings.filterwarnings("ignore")
 
 import torch
 print("CUDA available:", torch.cuda.is_available())
