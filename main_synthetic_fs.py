@@ -1,3 +1,4 @@
+print("OK")
 from sklearn.feature_selection import mutual_info_classif, RFECV, SelectKBest, chi2, mutual_info_regression
 from synthesized_data import *
 from sklearn.linear_model import Lasso
