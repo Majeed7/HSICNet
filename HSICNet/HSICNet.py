@@ -127,6 +127,27 @@ class HSICNet(nn.Module):
         dists = (y1.unsqueeze(1) - y2.unsqueeze(0)) ** 2
         return torch.exp(-dists / (2 * sigma_y**2))
 
+    # Categorical kernel for classification problems
+    def categorical_kernel(y1, y2):
+        """
+        Compute the categorical kernel between two tensors of categorical variables.
+
+        Parameters:
+        y1 (torch.Tensor): 1D tensor of categorical values.
+        y2 (torch.Tensor): 1D tensor of categorical values.
+
+        Returns:
+        torch.Tensor: Kernel matrix where element (i, j) is 1 if y1[i] == y2[j], and 0 otherwise.
+        """
+        # Ensure inputs are 1D tensors
+        if y1.ndim != 1 or y2.ndim != 1:
+            raise ValueError("Input tensors must be 1D tensors of categorical values.")
+        
+        # Compute the kernel matrix
+        kernel_matrix = (y1.unsqueeze(1) == y2.unsqueeze(0)).float()
+        
+        return kernel_matrix
+    
     # The Loss function based on HSIC
     def hsic_loss_adaptive(self, X, y, s, sigmas, sigma_y):
         X_kernel = self.anova_kernel(X, X, s, sigmas)
@@ -310,8 +331,6 @@ class HSICNet(nn.Module):
         sv_i = torch.trace(H @ k_tilde @ H @ k_y) / (n - 1) ** 2
 
         return sv_i, k_tilde, dp
-
-
 
 """
 Training a network with maximizing HSIC with Gumbel Sparsemax

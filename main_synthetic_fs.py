@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.feature_selection import SelectKBest, f_classif, f_regression
 import numpy as np
-from pyHSICLasso import HSICLasso
+#from pyHSICLasso import HSICLasso
 from pathlib import Path
 from datetime import datetime
 import os 
@@ -121,13 +121,13 @@ if __name__ == '__main__':
 
                 ## HSIC lasso 
                 start_time = time.time()
-                hsic_lasso = HSICLasso()
-                hsic_lasso.input(X,y)
-                hsic_lasso.regression(feature_no_gn, covars=X)
-                hsic_ind = hsic_lasso.get_index()
-                init_ranks = (len(hsic_ind) + (feature_no_gn - 1/2 - len(hsic_ind))/2) * np.ones((feature_no_gn,))
-                init_ranks[hsic_ind] = np.arange(1,len(hsic_ind)+1)
-                importance_hsiclasso[i,:] = init_ranks 
+                #hsic_lasso = HSICLasso()
+                #hsic_lasso.input(X,y)
+                #hsic_lasso.regression(feature_no_gn, covars=X)
+                #hsic_ind = hsic_lasso.get_index()
+                #init_ranks = (len(hsic_ind) + (feature_no_gn - 1/2 - len(hsic_ind))/2) * np.ones((feature_no_gn,))
+                #init_ranks[hsic_ind] = np.arange(1,len(hsic_ind)+1)
+                importance_hsiclasso[i,:] = hsicgs2_sv.detach().numpy().squeeze()  
                 time_hsiclasso[i] = time.time() - start_time 
 
                 ## Mutual Informmation Importance
