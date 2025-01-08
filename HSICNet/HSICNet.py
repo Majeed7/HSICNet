@@ -294,7 +294,7 @@ class HSICNet(nn.Module):
 
         sv = torch.zeros(d, 1)
         for i in range(d):
-            sv[i], k_tilde, dp = self.global_sv_dim(Ks, k_y, H, i)
+            sv[i], _, _ = self.global_sv_dim_efficient(Ks, k_y, H, i)
 
         hsic = torch.trace(H @ anova_k @ H @ k_y) / (n - 1) ** 2
         return sv, hsic
@@ -331,6 +331,39 @@ class HSICNet(nn.Module):
         sv_i = torch.trace(H @ k_tilde @ H @ k_y) / (n - 1) ** 2
 
         return sv_i, k_tilde, dp
+
+    def global_sv_dim_efficient(self, Ks, k_y, H, dim):
+        d, n = Ks.shape[0], Ks.shape[1]
+
+        dp = torch.zeros(d, n, n)
+        d0 = Ks.clone().detach()  # Clone and prepare for swapping
+        d0[0, :, :] = Ks[dim, :, :]
+        d0[dim, :, :] = Ks[0, :, :]
+        dp.copy_(d0)
+
+        sum_current = torch.sum(Ks, axis=0)
+        k_tilde = dp[0, :, :].clone()
+
+        for i in range(1, d):
+            temp_sum = torch.zeros((n, n))
+            for j in range(d-i):
+                # Subtract the previous contribution of this feature when moving to the next order
+                sum_current -= dp[j, :, :]
+
+                dp[j, :, :] = (i / (i+1)) * d0[j, :, :] * sum_current
+                temp_sum += dp[j, :, :]
+                if j == 0:
+                    k_tilde += dp[j, :, :]
+
+            sum_current = temp_sum
+
+        #k_tilde = torch.sum(dp[:, 0, :, :], axis=0)
+
+        sv_i = torch.trace(H @ k_tilde @ H @ k_y) / (n - 1) ** 2
+
+        return sv_i, k_tilde, dp
+
+
 
 """
 Training a network with maximizing HSIC with Gumbel Sparsemax

@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
             mode = 'regression'
             print(ds_name, i)
-            ## HSICFeatureNet based feature selection
+                ## HSICFeatureNet based feature selection
             X_tensor = torch.tensor(X, dtype=torch.float32)# torch.from_numpy(X).float()  # Convert to float tensor
             y_tensor = torch.tensor(y, dtype=torch.float32)  # Create float tensor directly from list or other data type
             sigma_init_X = torch.tensor([0.5]*feature_no_gn) #initialize_sigma_median_heuristic(X_tensor)
@@ -93,7 +93,7 @@ if __name__ == '__main__':
             importance_hsicfngs[i,:] = hsicfngs_sv.detach().numpy().squeeze()
             time_hsicfngs[i] = time.time() - start_time
 
-            ## HSICFeatureNetGumbelSparsemax2
+                ## HSICFeatureNetGumbelSparsemax2
             start_time = time.time()
             featuregumbelsparsemax_model = HSICFeatureNetGumbelSparsemax(feature_no_gn, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples , temperature=20)
             featuregumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE = 500)

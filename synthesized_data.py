@@ -32,7 +32,7 @@ def create_rank(scores):
 
 def generate_X(num_samples, num_features, influential_indices, correlation_value=0.6):
     # Generate samples with a standard normal distribution
-    #return np.random.randn(num_samples, num_features)
+    return np.random.randn(num_samples, num_features)
     """
     Generate synthetic data where specified influential features are correlated with unique non-influential features.
 
