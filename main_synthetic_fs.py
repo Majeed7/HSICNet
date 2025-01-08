@@ -5,7 +5,7 @@ from sklearn.linear_model import Lasso
 from sklearn.svm import SVC, SVR
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.feature_selection import SelectKBest, f_classif, f_regression
-#from pyHSICLasso import HSICLasso
+from pyHSICLasso import HSICLasso
 from pathlib import Path
 import os 
 from openpyxl import load_workbook
@@ -32,10 +32,11 @@ if not os.path.exists(results_xsl):
 if __name__ == '__main__':
     np.random.seed(30)
 
-    sample_no_gn = 1000 # number of generated synthesized instances 
-    feature_no_gn = 16 # number of features for the synthesized instances
+    sample_no_gn = 2000 # number of generated synthesized instances 
+    feature_no_gn = 20 # number of features for the synthesized instances
+    smaple_gX = 200   # number of samples to be explained
 
-    exp_no = 1 # number of experiments
+    exp_no = 30 # number of experiments
     importance_mi = np.zeros((exp_no,feature_no_gn))
     importance_lasso = np.zeros((exp_no,feature_no_gn))
     orders_rfecv = np.zeros((exp_no,feature_no_gn))
@@ -74,39 +75,59 @@ if __name__ == '__main__':
 
             mode = 'regression'
             print(ds_name, i)
-            ## HSIC based feature selection
+            ## HSICFeatureNet based feature selection
             X_tensor = torch.tensor(X, dtype=torch.float32)# torch.from_numpy(X).float()  # Convert to float tensor
             y_tensor = torch.tensor(y, dtype=torch.float32)  # Create float tensor directly from list or other data type
             sigma_init_X = torch.tensor([0.5]*feature_no_gn) #initialize_sigma_median_heuristic(X_tensor)
             sigma_init_Y = torch.tensor(0.5) #initialize_sigma_y_median_heuristic(y_tensor)
             num_samples = len(feature_imp)
+            selected_indices = np.random.choice(X.shape[0], size=smaple_gX, replace=False)
+            X_gx = X_tensor[selected_indices, :]
+            y_gx = y_tensor[selected_indices]
 
             start_time = time.time()
             featuregumbelsparsemax_model = HSICFeatureNetGumbelSparsemax(feature_no_gn, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples * 3, temperature=20)
-            featuregumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE = 1000)
-            weights = featuregumbelsparsemax_model(X_tensor)[0]
-            hsicfngs_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(X_tensor, y_tensor, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
+            featuregumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE = 500)
+            weights = featuregumbelsparsemax_model(X_gx)[0]
+            hsicfngs_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
             importance_hsicfngs[i,:] = hsicfngs_sv.detach().numpy().squeeze()
+            time_hsicfngs[i] = time.time() - start_time
+
+            ## HSICFeatureNetGumbelSparsemax2
+            start_time = time.time()
+            featuregumbelsparsemax_model = HSICFeatureNetGumbelSparsemax(feature_no_gn, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples , temperature=20)
+            featuregumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE = 500)
+            weights = featuregumbelsparsemax_model(X_gx)[0]
+            hsicfngs2_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
+            importance_hsicfngs2[i,:] = hsicfngs2_sv.detach().numpy().squeeze()
             time_hsicfngs[i] = time.time() - start_time
             
                 ## HSICNetGumbelSparsemax
             gumbelsparsemax_model = HSICNetGumbelSparsemax(feature_no_gn, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples)
-            gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=1000)
+            gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=500)
             weights = gumbelsparsemax_model(X_tensor)[0]
-            hsicgs_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(X_tensor, y_tensor, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
+            hsicgs_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
             importance_hsicgs[i,:] = hsicgs_sv.detach().numpy().squeeze()
             time_hsicgs[i] = time.time() - start_time
             
+                ## HSICNetGumbelSparsemax2
+            gumbelsparsemax_model = HSICNetGumbelSparsemax(feature_no_gn, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples*2)
+            gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=500)
+            weights = gumbelsparsemax_model(X_tensor)[0]
+            hsicgs_sv2, v0 = featuregumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
+            importance_hsicgs2[i,:] = hsicgs_sv2.detach().numpy().squeeze()
+            time_hsicgs[i] = time.time() - start_time
+
             ## HSIC lasso 
-            # start_time = time.time()
-            # hsic_lasso = HSICLasso()
-            # hsic_lasso.input(X,y)
-            # hsic_lasso.regression(feature_no_gn, covars=X)
-            # hsic_ind = hsic_lasso.get_index()
-            # init_ranks = (len(hsic_ind) + (feature_no_gn - 1/2 - len(hsic_ind))/2) * np.ones((feature_no_gn,))
-            # init_ranks[hsic_ind] = np.arange(1,len(hsic_ind)+1)
-            # importance_hsiclasso[i,:] = hsicgs_sv.detach().numpy().squeeze()  
-            # time_hsiclasso[i] = time.time() - start_time 
+            start_time = time.time()
+            hsic_lasso = HSICLasso()
+            hsic_lasso.input(X,y)
+            hsic_lasso.regression(feature_no_gn, covars=X)
+            hsic_ind = hsic_lasso.get_index()
+            init_ranks = (len(hsic_ind) + (feature_no_gn - 1/2 - len(hsic_ind))/2) * np.ones((feature_no_gn,))
+            init_ranks[hsic_ind] = np.arange(1,len(hsic_ind)+1)
+            importance_hsiclasso[i,:] = hsicgs_sv.detach().numpy().squeeze()  
+            time_hsiclasso[i] = time.time() - start_time 
 
             ## Mutual Informmation Importance
             start_time = time.time()
