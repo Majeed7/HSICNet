@@ -105,7 +105,7 @@ if __name__ == '__main__':
                 ## HSICNetGumbelSparsemax
             gumbelsparsemax_model = HSICNetGumbelSparsemax(feature_no_gn, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples)
             gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=500)
-            weights = gumbelsparsemax_model(X_tensor)[0]
+            weights = gumbelsparsemax_model(X_gx)[0]
             hsicgs_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
             importance_hsicgs[i,:] = hsicgs_sv.detach().numpy().squeeze()
             time_hsicgs[i] = time.time() - start_time
