@@ -119,7 +119,7 @@ if __name__ == '__main__':
             gumbelsparsemax_model = HSICNetGumbelSparsemax(feature_no_gn, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples).to(device=device)
             gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
             weights = gumbelsparsemax_model(X_gx)[0]
-            hsicgs_sv, v0 = gumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
+            hsicgs_sv, v0 = gumbelsparsemax_model.global_shapley_value(X_gx, y_gx, gumbelsparsemax_model.sigmas, gumbelsparsemax_model.sigma_y, weights)
             importance_hsicgs[i,:] = hsicgs_sv.detach().cpu().numpy().squeeze()
             time_hsicgs[i] = time.time() - start_time
             del gumbelsparsemax_model
@@ -129,7 +129,7 @@ if __name__ == '__main__':
             gumbelsparsemax_model = HSICNetGumbelSparsemax(feature_no_gn, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples*2).to(device=device)   
             gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
             weights = gumbelsparsemax_model(X_gx)[0]
-            hsicgs_sv2, v0 = gumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
+            hsicgs_sv2, v0 = gumbelsparsemax_model.global_shapley_value(X_gx, y_gx, gumbelsparsemax_model.sigmas, gumbelsparsemax_model.sigma_y, weights)
             importance_hsicgs2[i,:] = hsicgs_sv2.detach().cpu().numpy().squeeze()
             time_hsicgs[i] = time.time() - start_time
             del gumbelsparsemax_model

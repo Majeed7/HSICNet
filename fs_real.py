@@ -1,5 +1,4 @@
 from sklearn.datasets import fetch_openml
-from sklearn.feature_selection import mutual_info_classif
 from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
@@ -10,6 +9,19 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.utils.multiclass import type_of_target
 import copy 
+
+import os
+import pickle
+import time
+from openpyxl import Workbook
+from sklearn.feature_selection import mutual_info_classif, mutual_info_regression, SelectKBest, f_classif, f_regression
+from sklearn.linear_model import Lasso
+from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
+from sklearn.svm import SVC, SVR
+from sklearn.model_selection import RFECV
+
+from HSICNet.HSICNet import *
+from HSICNet.HSICFeatureNet import *
 
 def train_svm(X_train, y_train, X_test, y_test):
     """
@@ -100,9 +112,18 @@ def load_dataset(name):
     X, y = dataset.data, dataset.target
     return X, y
 
-# List of dataset names to process
+
+# Ensure a directory exists for saving models
+os.makedirs("trained_models", exist_ok=True)
+
+# Define the list of feature selectors
+feature_selectors = ["HSICFeatureNetGumbelSparsemax", "HSICNetGumbelSparsemax", "mutual_info", "lasso", "rfecv", "k_best", "tree_ensemble"]
+
+# Initialize an Excel workbook to store global importance values
+wb = Workbook()
+
 dataset_names = ["arrhythmia", "madelon", "nomao", "gisette", "waveform", "steel", "sonar"]
-dataset_names = ["nomao"]
+# Main running part of the script
 for dataset_name in dataset_names:
     print(f"\nProcessing dataset: {dataset_name}")
     try:
@@ -111,35 +132,100 @@ for dataset_name in dataset_names:
         print(f"Failed to load dataset {dataset_name}: {e}")
         continue
 
+    # Determine if the dataset is for classification or regression
+    mode = "classification" if type_of_target(y) in ["binary", "multiclass"] else "regression"
+
     # Split the dataset into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 
-    # Train SVM on the full dataset
+    # Train SVM on the full dataset and store the best model
     print("Training SVM on the full dataset...")
     best_model, best_params, full_score = train_svm(X_train, y_train, X_test, y_test)
 
-    # Feature selection using mutual information
-    print("Performing feature selection using mutual information...")
-    imputer = SimpleImputer(strategy="mean")
-    X_train_imputed = imputer.fit_transform(X_train)
-    X_test_imputed = imputer.transform(X_test)
+    # Save the trained model to a file
+    model_filename = f"trained_models/svm_{dataset_name}.pkl"
+    with open(model_filename, "wb") as f:
+        pickle.dump(best_model, f)
+    print(f"Saved best SVM model for {dataset_name} to {model_filename}")
 
-    # Compute mutual information scores
-    mi_scores = mutual_info_classif(X_train_imputed, y_train, random_state=42)
+    # Prepare an Excel sheet for the current dataset
+    sheet = wb.create_sheet(title=dataset_name)
+    sheet.append(["Feature Selector", "Execution Time"] + [f"Feature {i}" for i in range(X.shape[1])])
 
-    top_10_percent_indices = np.argsort(mi_scores)[-int(len(mi_scores) * 0.1):]
+    # Apply each feature selector
+    for selector in feature_selectors:
+        print(f"Applying feature selector: {selector} on dataset: {dataset_name}")
+        start_time = time.time()
 
-    # Subset the top 10% features
-    X_train_top = X_train.iloc[:, top_10_percent_indices]
-    X_test_top = X_test.iloc[:, top_10_percent_indices]
+        if selector == "HSICFeatureNetGumbelSparsemax":
+            featuregumbelsparsemax_model = HSICFeatureNetGumbelSparsemax(
+                feature_no_gn, feature_layers, act_fun_featlayer, layers,
+                act_fun_layer, sigma_init_X, sigma_init_Y, num_samples * 3, temperature=20
+            ).to(device=device)
+            featuregumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
+            weights = featuregumbelsparsemax_model(X_gx)[0]
+            hsicfngs_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(
+                X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights
+            )
+            global_importance = hsicfngs_sv.detach().cpu().numpy().squeeze()
+            model_filename = f"trained_models/hsicfeaturegumbelsparsemax_{dataset_name}.pkl"
+            with open(model_filename, "wb") as f:
+                pickle.dump(featuregumbelsparsemax_model, f)
+            del featuregumbelsparsemax_model
+            memory_cleaning()
 
-    # Retrain SVM with the top 10% features using the best hyperparameters
-    print(f"Training SVM with top 10% features on dataset: {dataset_name}")
-    model = copy.deepcopy(best_model)    
-    model.fit(X_train_top, y_train)
-    y_pred = model.predict(X_test_top)
-    top_score = accuracy_score(y_test, y_pred)
+        elif selector == "HSICNetGumbelSparsemax":
+            gumbelsparsemax_model = HSICNetGumbelSparsemax(
+                feature_no_gn, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples
+            ).to(device=device)
+            gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
+            weights = gumbelsparsemax_model(X_gx)[0]
+            hsicgs_sv, v0 = gumbelsparsemax_model.global_shapley_value(
+                X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights
+            )
+            global_importance = hsicgs_sv.detach().cpu().numpy().squeeze()
+            model_filename = f"trained_models/hsicnetgumbelsparsemax_{dataset_name}.pkl"
+            with open(model_filename, "wb") as f:
+                pickle.dump(gumbelsparsemax_model, f)
+            del gumbelsparsemax_model
+            memory_cleaning()
 
-    print(f"Dataset: {dataset_name} - Full Accuracy: {full_score}, Top 10% Features Accuracy: {top_score}")
+        elif selector == "mutual_info":
+            global_importance = mutual_info_classif(X, y) if mode == "classification" else mutual_info_regression(X, y)
+
+        elif selector == "lasso":
+            lasso = Lasso().fit(X, y)
+            global_importance = np.abs(lasso.coef_)
+
+        elif selector == "rfecv":
+            estimator = SVC(kernel="linear") if mode == "classification" else SVR(kernel="linear")
+            rfecv = RFECV(estimator, step=1, cv=5)
+            rfecv.fit(X, y)
+            global_importance = rfecv.ranking_
+
+        elif selector == "k_best":
+            bestfeatures = SelectKBest(score_func=f_classif, k="all") if mode == "classification" else SelectKBest(score_func=f_regression, k="all")
+            fit = bestfeatures.fit(X, y)
+            global_importance = fit.scores_
+
+        elif selector == "tree_ensemble":
+            model = ExtraTreesClassifier(n_estimators=50) if mode == "classification" else ExtraTreesRegressor(n_estimators=50)
+            model.fit(X, y)
+            global_importance = model.feature_importances_
+
+        else:
+            print(f"Unknown feature selector: {selector}")
+            continue
+
+        execution_time = time.time() - start_time
+        print(f"Execution time for {selector}: {execution_time}")
+
+        # Store global importance values in the Excel sheet
+        sheet.append([selector, execution_time] + list(global_importance))
+
+    # Save the Excel file after processing each dataset
+    excel_filename = "feature_importance.xlsx"
+    wb.save(excel_filename)
+    print(f"Global feature importance for {dataset_name} saved to {excel_filename}")
 
 print("All datasets processed!")
