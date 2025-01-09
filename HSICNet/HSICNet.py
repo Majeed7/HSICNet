@@ -265,15 +265,15 @@ class HSICNet(nn.Module):
     def global_shapley_value(self, X_train, y_train, sigmas, sigma_y, weights):
         n, d = X_train.shape
         Ks = torch.zeros(d, n, n, device=X_train.device)
-        # anova_k = torch.ones(n, n, device=X_train.device)
+        anova_k = torch.ones(n, n, device=X_train.device)
 
-        # for i in range(X_train.size(1)):  # iterate over features
-        #     dists = (X_train[:, i].unsqueeze(1) - X_train[:, i].unsqueeze(0)) ** 2
-        #     k = (weights[:, i].unsqueeze(1) *
-        #         torch.exp(-dists / (2 * sigmas[i]**2)))
-        #     anova_k *= (1 + k)
-        #     Ks[i, :, :] = k
-        # anova_k -= 1
+        for i in range(X_train.size(1)):  # iterate over features
+            dists = (X_train[:, i].unsqueeze(1) - X_train[:, i].unsqueeze(0)) ** 2
+            k = (weights[:, i].unsqueeze(1) *
+                torch.exp(-dists / (2 * sigmas[i]**2)))
+            anova_k *= (1 + k)
+            Ks[i, :, :] = k
+        anova_k -= 1
 
         dists = (y_train.unsqueeze(1) - y_train.unsqueeze(0)) ** 2
         k_y = torch.exp(-dists / (2 * sigma_y**2))
@@ -300,7 +300,7 @@ class HSICNet(nn.Module):
 
         hsic = 0 #torch.trace(H @ anova_k @ H @ k_y) / (n - 1) ** 2
 
-        del Ks, k_y, H #, anova_k
+        del Ks, k_y, H, anova_k
         return sv, hsic
 
     def global_sv_dim(self, Ks, k_y, H, dim):
