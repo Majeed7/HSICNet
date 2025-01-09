@@ -275,11 +275,11 @@ class HSICNet(nn.Module):
             Ks[i, :, :] = k
         anova_k -= 1
 
-        del dists, k
+        
 
         dists = (y_train.unsqueeze(1) - y_train.unsqueeze(0)) ** 2
         k_y = torch.exp(-dists / (2 * sigma_y**2))
-        del dists
+        del dists, k
 
         H = torch.eye(n).to(X_train.device)  # - (1 / n) * torch.ones(n, n).to(X_train.device)
 
@@ -297,7 +297,7 @@ class HSICNet(nn.Module):
 
         sv = torch.zeros(d, 1, device=X_train.device)
         for i in range(d):
-            sv[i], _, _ = self.global_sv_dim_efficient(Ks, k_y, H, i)
+            sv[i] = self.global_sv_dim_efficient(Ks, k_y, H, i)
 
         hsic = torch.trace(H @ anova_k @ H @ k_y) / (n - 1) ** 2
 
@@ -335,7 +335,7 @@ class HSICNet(nn.Module):
 
         sv_i = torch.trace(H @ k_tilde @ H @ k_y) / (n - 1) ** 2
 
-        return sv_i, k_tilde, dp
+        return sv_i#, k_tilde, dp
 
     def global_sv_dim_efficient(self, Ks, k_y, H, dim):
         d, n = Ks.shape[0], Ks.shape[1]
