@@ -71,7 +71,7 @@ if __name__ == '__main__':
     datasets=['Sine Log', 'Sine Cosine', 'Poly Sine', 'Squared Exponentials', 'Tanh Sine', 
               'Trigonometric Exponential', 'Exponential Hyperbolic', 'XOR'] #
     
-    epoch=50
+    epoch=500
     layers = [200, 300, 200]
     feature_layers = [20, 50, 20]
     act_fun_featlayer = torch.nn.SELU
