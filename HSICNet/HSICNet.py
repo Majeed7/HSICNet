@@ -341,7 +341,7 @@ class HSICNet(nn.Module):
         d0[dim, :, :] = Ks[0, :, :]
         dp.copy_(d0)
 
-        sum_current = torch.sum(Ks, axis=0, device=Ks.device)
+        sum_current = torch.sum(Ks, axis=0)
         k_tilde = dp[0, :, :].clone()
 
         for i in range(1, d):

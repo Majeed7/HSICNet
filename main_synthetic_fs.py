@@ -71,7 +71,7 @@ if __name__ == '__main__':
     datasets=['Sine Log', 'Sine Cosine', 'Poly Sine', 'Squared Exponentials', 'Tanh Sine', 
               'Trigonometric Exponential', 'Exponential Hyperbolic', 'XOR'] #
     
-    epoch=500
+    epoch=50
     layers = [200, 300, 200]
     feature_layers = [20, 50, 20]
     act_fun_featlayer = torch.nn.SELU
@@ -129,7 +129,7 @@ if __name__ == '__main__':
             importance_hsicgs2[i,:] = hsicgs_sv2.detach().numpy().squeeze()
             time_hsicgs[i] = time.time() - start_time
             memory_cleaning()
-            
+
             ## HSIC lasso 
             # start_time = time.time()
             # hsic_lasso = HSICLasso()
