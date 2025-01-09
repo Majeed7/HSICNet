@@ -101,6 +101,7 @@ if __name__ == '__main__':
             importance_hsicfngs[i,:] = hsicfngs_sv.detach().cpu().numpy().squeeze()
             time_hsicfngs[i] = time.time() - start_time
             print(f"execution time: {time_hsicfngs[i]}")
+            del featuregumbelsparsemax_model
             memory_cleaning()
 
                 ## HSICFeatureNetGumbelSparsemax2
@@ -111,6 +112,7 @@ if __name__ == '__main__':
             hsicfngs2_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
             importance_hsicfngs2[i,:] = hsicfngs2_sv.detach().cpu().numpy().squeeze()
             time_hsicfngs[i] = time.time() - start_time
+            del featuregumbelsparsemax_model
             memory_cleaning()
 
                 ## HSICNetGumbelSparsemax
@@ -120,6 +122,7 @@ if __name__ == '__main__':
             hsicgs_sv, v0 = gumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
             importance_hsicgs[i,:] = hsicgs_sv.detach().cpu().numpy().squeeze()
             time_hsicgs[i] = time.time() - start_time
+            del gumbelsparsemax_model
             memory_cleaning()
 
                 ## HSICNetGumbelSparsemax2
@@ -129,6 +132,7 @@ if __name__ == '__main__':
             hsicgs_sv2, v0 = gumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
             importance_hsicgs2[i,:] = hsicgs_sv2.detach().cpu().numpy().squeeze()
             time_hsicgs[i] = time.time() - start_time
+            del gumbelsparsemax_model
             memory_cleaning()
 
             ## HSIC lasso 

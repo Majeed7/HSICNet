@@ -275,28 +275,33 @@ class HSICNet(nn.Module):
             Ks[i, :, :] = k
         anova_k -= 1
 
+        del dists, k
+
         dists = (y_train.unsqueeze(1) - y_train.unsqueeze(0)) ** 2
         k_y = torch.exp(-dists / (2 * sigma_y**2))
+        del dists
 
         H = torch.eye(n).to(X_train.device)  # - (1 / n) * torch.ones(n, n).to(X_train.device)
 
         # We define inclusive and noninclusive weights for value functions that inlcude/not-include the the corresponding feature
-        inclusive_weights = torch.zeros(d, 1)
-        noninclusive_weights = torch.zeros(d, 1)
+        # inclusive_weights = torch.zeros(d, 1)
+        # noninclusive_weights = torch.zeros(d, 1)
 
-        for i in range(d):
-            inclusive_weights[i] = math.factorial(i) * math.factorial(d - i - 1)
-            if i < d-1:
-                noninclusive_weights[i] = math.factorial(
-                    i+1) * math.factorial(d - (i + 1) - 1)
-        inclusive_weights /= math.factorial(d)
-        noninclusive_weights /= math.factorial(d)
+        # for i in range(d):
+        #     inclusive_weights[i] = math.factorial(i) * math.factorial(d - i - 1)
+        #     if i < d-1:
+        #         noninclusive_weights[i] = math.factorial(
+        #             i+1) * math.factorial(d - (i + 1) - 1)
+        # inclusive_weights /= math.factorial(d)
+        # noninclusive_weights /= math.factorial(d)
 
         sv = torch.zeros(d, 1, device=X_train.device)
         for i in range(d):
             sv[i], _, _ = self.global_sv_dim_efficient(Ks, k_y, H, i)
 
         hsic = torch.trace(H @ anova_k @ H @ k_y) / (n - 1) ** 2
+
+        del Ks, anova_k, k_y, H
         return sv, hsic
 
     def global_sv_dim(self, Ks, k_y, H, dim):
@@ -360,8 +365,8 @@ class HSICNet(nn.Module):
         #k_tilde = torch.sum(dp[:, 0, :, :], axis=0)
 
         sv_i = torch.trace(H @ k_tilde @ H @ k_y) / (n - 1) ** 2
-
-        return sv_i, k_tilde, dp
+        del k_tilde, d0, dp, sum_current
+        return sv_i
 
 
 
