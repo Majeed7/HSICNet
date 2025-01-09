@@ -264,8 +264,8 @@ class HSICNet(nn.Module):
     ## Global Shapley Value
     def global_shapley_value(self, X_train, y_train, sigmas, sigma_y, weights):
         n, d = X_train.shape
-        Ks = torch.zeros(d, n, n)
-        anova_k = torch.ones(n, n)
+        Ks = torch.zeros(d, n, n, device=X_train.device)
+        anova_k = torch.ones(n, n, device=X_train.device)
 
         for i in range(X_train.size(1)):  # iterate over features
             dists = (X_train[:, i].unsqueeze(1) - X_train[:, i].unsqueeze(0)) ** 2
@@ -292,7 +292,7 @@ class HSICNet(nn.Module):
         inclusive_weights /= math.factorial(d)
         noninclusive_weights /= math.factorial(d)
 
-        sv = torch.zeros(d, 1)
+        sv = torch.zeros(d, 1, device=X_train.device)
         for i in range(d):
             sv[i], _, _ = self.global_sv_dim_efficient(Ks, k_y, H, i)
 
@@ -335,17 +335,17 @@ class HSICNet(nn.Module):
     def global_sv_dim_efficient(self, Ks, k_y, H, dim):
         d, n = Ks.shape[0], Ks.shape[1]
 
-        dp = torch.zeros(d, n, n)
+        dp = torch.zeros(d, n, n, device=Ks.device)
         d0 = Ks.clone().detach()  # Clone and prepare for swapping
         d0[0, :, :] = Ks[dim, :, :]
         d0[dim, :, :] = Ks[0, :, :]
         dp.copy_(d0)
 
-        sum_current = torch.sum(Ks, axis=0)
+        sum_current = torch.sum(Ks, axis=0, device=Ks.device)
         k_tilde = dp[0, :, :].clone()
 
         for i in range(1, d):
-            temp_sum = torch.zeros((n, n))
+            temp_sum = torch.zeros((n, n), device=Ks.device)
             for j in range(d-i):
                 # Subtract the previous contribution of this feature when moving to the next order
                 sum_current -= dp[j, :, :]
