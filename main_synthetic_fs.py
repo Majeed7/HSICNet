@@ -98,8 +98,9 @@ if __name__ == '__main__':
             featuregumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE = 200)
             weights = featuregumbelsparsemax_model(X_gx)[0]
             hsicfngs_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
-            importance_hsicfngs[i,:] = hsicfngs_sv.detach().numpy().squeeze()
+            importance_hsicfngs[i,:] = hsicfngs_sv.detach().cpu().numpy().squeeze()
             time_hsicfngs[i] = time.time() - start_time
+            print(f"execution time: {time_hsicfngs[i]}")
             memory_cleaning()
 
                 ## HSICFeatureNetGumbelSparsemax2
@@ -108,7 +109,7 @@ if __name__ == '__main__':
             featuregumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE = 200)
             weights = featuregumbelsparsemax_model(X_gx)[0]
             hsicfngs2_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
-            importance_hsicfngs2[i,:] = hsicfngs2_sv.detach().numpy().squeeze()
+            importance_hsicfngs2[i,:] = hsicfngs2_sv.detach().cpu().numpy().squeeze()
             time_hsicfngs[i] = time.time() - start_time
             memory_cleaning()
 
@@ -117,7 +118,7 @@ if __name__ == '__main__':
             gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
             weights = gumbelsparsemax_model(X_gx)[0]
             hsicgs_sv, v0 = gumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
-            importance_hsicgs[i,:] = hsicgs_sv.detach().numpy().squeeze()
+            importance_hsicgs[i,:] = hsicgs_sv.detach().cpu().numpy().squeeze()
             time_hsicgs[i] = time.time() - start_time
             memory_cleaning()
 
@@ -126,7 +127,7 @@ if __name__ == '__main__':
             gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
             weights = gumbelsparsemax_model(X_gx)[0]
             hsicgs_sv2, v0 = gumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
-            importance_hsicgs2[i,:] = hsicgs_sv2.detach().numpy().squeeze()
+            importance_hsicgs2[i,:] = hsicgs_sv2.detach().cpu().numpy().squeeze()
             time_hsicgs[i] = time.time() - start_time
             memory_cleaning()
 
