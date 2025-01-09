@@ -113,7 +113,7 @@ class HSICNet(nn.Module):
         Returns:
         - Kernel matrix for inputs X1 and X2
         """
-        prod = torch.ones((X1.size(0), X2.size(0)))
+        prod = torch.ones((X1.size(0), X2.size(0)), device=X1.device)
         for i in range(X1.size(1)):  # iterate over features
             dists = (X1[:, i].unsqueeze(1) - X2[:, i].unsqueeze(0)) ** 2
             prod *= (1 + s[:, i].unsqueeze(1) * torch.exp(-dists / (2 * sigmas[i]**2)))
