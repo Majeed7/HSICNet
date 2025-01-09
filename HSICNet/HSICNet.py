@@ -265,23 +265,21 @@ class HSICNet(nn.Module):
     def global_shapley_value(self, X_train, y_train, sigmas, sigma_y, weights):
         n, d = X_train.shape
         Ks = torch.zeros(d, n, n, device=X_train.device)
-        anova_k = torch.ones(n, n, device=X_train.device)
+        # anova_k = torch.ones(n, n, device=X_train.device)
 
-        for i in range(X_train.size(1)):  # iterate over features
-            dists = (X_train[:, i].unsqueeze(1) - X_train[:, i].unsqueeze(0)) ** 2
-            k = (weights[:, i].unsqueeze(1) *
-                torch.exp(-dists / (2 * sigmas[i]**2)))
-            anova_k *= (1 + k)
-            Ks[i, :, :] = k
-        anova_k -= 1
-
-        
+        # for i in range(X_train.size(1)):  # iterate over features
+        #     dists = (X_train[:, i].unsqueeze(1) - X_train[:, i].unsqueeze(0)) ** 2
+        #     k = (weights[:, i].unsqueeze(1) *
+        #         torch.exp(-dists / (2 * sigmas[i]**2)))
+        #     anova_k *= (1 + k)
+        #     Ks[i, :, :] = k
+        # anova_k -= 1
 
         dists = (y_train.unsqueeze(1) - y_train.unsqueeze(0)) ** 2
         k_y = torch.exp(-dists / (2 * sigma_y**2))
         del dists, k
 
-        H = torch.eye(n).to(X_train.device)  # - (1 / n) * torch.ones(n, n).to(X_train.device)
+        H = (torch.eye(n) - (1 / n) * torch.ones(n, n)).to(X_train.device)
 
         # We define inclusive and noninclusive weights for value functions that inlcude/not-include the the corresponding feature
         # inclusive_weights = torch.zeros(d, 1)
@@ -297,11 +295,12 @@ class HSICNet(nn.Module):
 
         sv = torch.zeros(d, 1, device=X_train.device)
         for i in range(d):
-            sv[i] = self.global_sv_dim_efficient(Ks, k_y, H, i)
+            with torch.no_grad():
+                sv[i] = self.global_sv_dim_efficient(Ks, k_y, H, i)
 
-        hsic = torch.trace(H @ anova_k @ H @ k_y) / (n - 1) ** 2
+        hsic = 0 #torch.trace(H @ anova_k @ H @ k_y) / (n - 1) ** 2
 
-        del Ks, anova_k, k_y, H
+        del Ks, k_y, H #, anova_k
         return sv, hsic
 
     def global_sv_dim(self, Ks, k_y, H, dim):

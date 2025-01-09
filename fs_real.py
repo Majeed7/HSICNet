@@ -14,11 +14,14 @@ import os
 import pickle
 import time
 from openpyxl import Workbook
-from sklearn.feature_selection import mutual_info_classif, mutual_info_regression, SelectKBest, f_classif, f_regression
+from sklearn.feature_selection import mutual_info_classif, mutual_info_regression, SelectKBest, f_classif, f_regression, RFECV
 from sklearn.linear_model import Lasso
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.svm import SVC, SVR
-from sklearn.model_selection import RFECV
+from pathlib import Path
+import gc
+from sklearn.cluster import KMeans
+from sklearn.metrics import pairwise_distances_argmin_min
 
 from HSICNet.HSICNet import *
 from HSICNet.HSICFeatureNet import *
@@ -122,110 +125,150 @@ feature_selectors = ["HSICFeatureNetGumbelSparsemax", "HSICNetGumbelSparsemax", 
 # Initialize an Excel workbook to store global importance values
 wb = Workbook()
 
-dataset_names = ["arrhythmia", "madelon", "nomao", "gisette", "waveform", "steel", "sonar"]
-# Main running part of the script
-for dataset_name in dataset_names:
-    print(f"\nProcessing dataset: {dataset_name}")
-    try:
-        X, y = load_dataset(dataset_name)
-    except Exception as e:
-        print(f"Failed to load dataset {dataset_name}: {e}")
-        continue
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Device:", device)
 
-    # Determine if the dataset is for classification or regression
-    mode = "classification" if type_of_target(y) in ["binary", "multiclass"] else "regression"
+results_xsl = Path('hsic_fs_synthesized.xlsx')
+if not os.path.exists(results_xsl):
+    # Create an empty Excel file if it doesn't exist
+    pd.DataFrame().to_excel(results_xsl, index=False)
 
-    # Split the dataset into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+def memory_cleaning():
+    # Clear memory
+    torch.cuda.empty_cache()
+    gc.collect()
 
-    # Train SVM on the full dataset and store the best model
-    print("Training SVM on the full dataset...")
-    best_model, best_params, full_score = train_svm(X_train, y_train, X_test, y_test)
+epoch=500
+layers = [200, 300, 200]
+feature_layers = [20, 50, 20]
+act_fun_featlayer = torch.nn.SELU
+act_fun_layer = torch.nn.Sigmoid
 
-    # Save the trained model to a file
-    model_filename = f"trained_models/svm_{dataset_name}.pkl"
-    with open(model_filename, "wb") as f:
-        pickle.dump(best_model, f)
-    print(f"Saved best SVM model for {dataset_name} to {model_filename}")
-
-    # Prepare an Excel sheet for the current dataset
-    sheet = wb.create_sheet(title=dataset_name)
-    sheet.append(["Feature Selector", "Execution Time"] + [f"Feature {i}" for i in range(X.shape[1])])
-
-    # Apply each feature selector
-    for selector in feature_selectors:
-        print(f"Applying feature selector: {selector} on dataset: {dataset_name}")
-        start_time = time.time()
-
-        if selector == "HSICFeatureNetGumbelSparsemax":
-            featuregumbelsparsemax_model = HSICFeatureNetGumbelSparsemax(
-                feature_no_gn, feature_layers, act_fun_featlayer, layers,
-                act_fun_layer, sigma_init_X, sigma_init_Y, num_samples * 3, temperature=20
-            ).to(device=device)
-            featuregumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
-            weights = featuregumbelsparsemax_model(X_gx)[0]
-            hsicfngs_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(
-                X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights
-            )
-            global_importance = hsicfngs_sv.detach().cpu().numpy().squeeze()
-            model_filename = f"trained_models/hsicfeaturegumbelsparsemax_{dataset_name}.pkl"
-            with open(model_filename, "wb") as f:
-                pickle.dump(featuregumbelsparsemax_model, f)
-            del featuregumbelsparsemax_model
-            memory_cleaning()
-
-        elif selector == "HSICNetGumbelSparsemax":
-            gumbelsparsemax_model = HSICNetGumbelSparsemax(
-                feature_no_gn, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples
-            ).to(device=device)
-            gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
-            weights = gumbelsparsemax_model(X_gx)[0]
-            hsicgs_sv, v0 = gumbelsparsemax_model.global_shapley_value(
-                X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights
-            )
-            global_importance = hsicgs_sv.detach().cpu().numpy().squeeze()
-            model_filename = f"trained_models/hsicnetgumbelsparsemax_{dataset_name}.pkl"
-            with open(model_filename, "wb") as f:
-                pickle.dump(gumbelsparsemax_model, f)
-            del gumbelsparsemax_model
-            memory_cleaning()
-
-        elif selector == "mutual_info":
-            global_importance = mutual_info_classif(X, y) if mode == "classification" else mutual_info_regression(X, y)
-
-        elif selector == "lasso":
-            lasso = Lasso().fit(X, y)
-            global_importance = np.abs(lasso.coef_)
-
-        elif selector == "rfecv":
-            estimator = SVC(kernel="linear") if mode == "classification" else SVR(kernel="linear")
-            rfecv = RFECV(estimator, step=1, cv=5)
-            rfecv.fit(X, y)
-            global_importance = rfecv.ranking_
-
-        elif selector == "k_best":
-            bestfeatures = SelectKBest(score_func=f_classif, k="all") if mode == "classification" else SelectKBest(score_func=f_regression, k="all")
-            fit = bestfeatures.fit(X, y)
-            global_importance = fit.scores_
-
-        elif selector == "tree_ensemble":
-            model = ExtraTreesClassifier(n_estimators=50) if mode == "classification" else ExtraTreesRegressor(n_estimators=50)
-            model.fit(X, y)
-            global_importance = model.feature_importances_
-
-        else:
-            print(f"Unknown feature selector: {selector}")
+if __name__ == '__main__':
+        
+    dataset_names = ["arrhythmia", "madelon", "nomao", "gisette", "waveform", "steel", "sonar"]
+    
+    # Main running part of the script
+    for dataset_name in dataset_names:
+        print(f"\nProcessing dataset: {dataset_name}")
+        try:
+            X, y = load_dataset(dataset_name)
+        except Exception as e:
+            print(f"Failed to load dataset {dataset_name}: {e}")
             continue
 
-        execution_time = time.time() - start_time
-        print(f"Execution time for {selector}: {execution_time}")
+        # Determine if the dataset is for classification or regression
+        mode = "classification" if type_of_target(y) in ["binary", "multiclass"] else "regression"
 
-        # Store global importance values in the Excel sheet
-        sheet.append([selector, execution_time] + list(global_importance))
+        # Split the dataset into training and testing sets
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+        n, d = X_train.shape
 
-    # Save the Excel file after processing each dataset
-    excel_filename = "feature_importance.xlsx"
-    wb.save(excel_filename)
-    print(f"Global feature importance for {dataset_name} saved to {excel_filename}")
+        # Convert the data to PyTorch tensors
+        X_tensor = torch.tensor(X_train.values, dtype=torch.float32).to(device=device)
+        y_tensor = torch.tensor(y_train.values, dtype=torch.float32).to(device=device)
+        sigma_init_X = torch.tensor([0.5]*d, device=device) #initialize_sigma_median_heuristic(X_tensor)
+        sigma_init_Y = torch.tensor(0.5, device=device) #initialize_sigma_y_median_heuristic(y_tensor)
 
-print("All datasets processed!")
+        # Get the most representative samples for the dataset
+        n_clusters = np.min((500, n))# Number of clusters (desired subset size)
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+        kmeans.fit(X_train)
+        centroids = kmeans.cluster_centers_
+
+        closest_indices, _ = pairwise_distances_argmin_min(centroids, X_train)
+
+        X_gx = X_tensor.iloc[closest_indices]
+        y_gx = y_tensor.iloc[closest_indices]
+        
+        '''Train SVM '''
+        # Train SVM on the full dataset and store the best model
+        print("Training SVM on the full dataset...")
+        best_model, best_params, full_score = train_svm(X_train, y_train, X_test, y_test)
+
+        # Save the trained model to a file
+        model_filename = f"trained_models/svm_{dataset_name}.pkl"
+        with open(model_filename, "wb") as f:
+            pickle.dump(best_model, f)
+        print(f"Saved best SVM model for {dataset_name} to {model_filename}")
+
+        # Prepare an Excel sheet for the current dataset
+        sheet = wb.create_sheet(title=dataset_name)
+        sheet.append(["Feature Selector", "Execution Time"] + [f"Feature {i}" for i in range(X.shape[1])])
+
+        # Apply each feature selector
+        for selector in feature_selectors:
+            print(f"Applying feature selector: {selector} on dataset: {dataset_name}")
+            start_time = time.time()
+
+            if selector == "HSICFeatureNetGumbelSparsemax":
+                featuregumbelsparsemax_model = HSICFeatureNetGumbelSparsemax(
+                    d, feature_layers, act_fun_featlayer, layers,
+                    act_fun_layer, sigma_init_X, sigma_init_Y, 10, temperature=20).to(device=device)
+                featuregumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
+                weights = featuregumbelsparsemax_model(X_gx)[0]
+                hsicfngs_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(
+                    X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights
+                )
+                global_importance = hsicfngs_sv.detach().cpu().numpy().squeeze()
+                model_filename = f"trained_models/hsicfeaturegumbelsparsemax_{dataset_name}.pkl"
+                with open(model_filename, "wb") as f:
+                    pickle.dump(featuregumbelsparsemax_model, f)
+                del featuregumbelsparsemax_model
+                memory_cleaning()
+
+            elif selector == "HSICNetGumbelSparsemax":
+                gumbelsparsemax_model = HSICNetGumbelSparsemax(
+                    d, layers, act_fun_layer, sigma_init_X, sigma_init_Y, 10).to(device=device)
+                gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
+                weights = gumbelsparsemax_model(X_gx)[0]
+                hsicgs_sv, v0 = gumbelsparsemax_model.global_shapley_value(
+                    X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
+                global_importance = hsicgs_sv.detach().cpu().numpy().squeeze()
+                model_filename = f"trained_models/hsicnetgumbelsparsemax_{dataset_name}.pkl"
+                with open(model_filename, "wb") as f:
+                    pickle.dump(gumbelsparsemax_model, f)
+                del gumbelsparsemax_model
+                memory_cleaning()
+
+            elif selector == "mutual_info":
+                global_importance = mutual_info_classif(X, y) if mode == "classification" else mutual_info_regression(X, y)
+
+            elif selector == "lasso":
+                lasso = Lasso().fit(X, y)
+                global_importance = np.abs(lasso.coef_)
+
+            elif selector == "rfecv":
+                estimator = SVC(kernel="linear") if mode == "classification" else SVR(kernel="linear")
+                rfecv = RFECV(estimator, step=1, cv=5)
+                rfecv.fit(X, y)
+                global_importance = rfecv.ranking_
+
+            elif selector == "k_best":
+                bestfeatures = SelectKBest(score_func=f_classif, k="all") if mode == "classification" else SelectKBest(score_func=f_regression, k="all")
+                fit = bestfeatures.fit(X, y)
+                global_importance = fit.scores_
+
+            elif selector == "tree_ensemble":
+                model = ExtraTreesClassifier(n_estimators=50) if mode == "classification" else ExtraTreesRegressor(n_estimators=50)
+                model.fit(X, y)
+                global_importance = model.feature_importances_
+
+            else:
+                print(f"Unknown feature selector: {selector}")
+                continue
+
+            execution_time = time.time() - start_time
+            print(f"Execution time for {selector}: {execution_time}")
+
+            # Store global importance values in the Excel sheet
+            sheet.append([selector, execution_time] + list(global_importance))
+
+        # Save the Excel file after processing each dataset
+        excel_filename = "feature_importance.xlsx"
+        wb.save(excel_filename)
+        print(f"Global feature importance for {dataset_name} saved to {excel_filename}")
+    
+    wb.close()
+    print("All datasets processed!")
+    
