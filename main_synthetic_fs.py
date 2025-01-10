@@ -5,7 +5,7 @@ from sklearn.linear_model import Lasso
 from sklearn.svm import SVC, SVR
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.feature_selection import SelectKBest, f_classif, f_regression
-# from pyHSICLasso import HSICLasso
+from pyHSICLasso import HSICLasso
 from pathlib import Path
 import os 
 from openpyxl import load_workbook
@@ -27,7 +27,7 @@ print("CUDA version:", torch.version.cuda)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Device:", device)
 
-results_xsl = Path('hsic_fs_synthesized.xlsx')
+results_xsl = Path('hsic_fs_synthesized.v4.xlsx')
 if not os.path.exists(results_xsl):
     # Create an empty Excel file if it doesn't exist
     pd.DataFrame().to_excel(results_xsl, index=False)
@@ -84,26 +84,26 @@ if __name__ == '__main__':
             mode = 'regression'
             print(ds_name, i)
                 ## HSICFeatureNet based feature selection
-            X_tensor = torch.tensor(X, dtype=torch.float32, device=device)# torch.from_numpy(X).float()  # Convert to float tensor
-            y_tensor = torch.tensor(y, dtype=torch.float32, device=device)  # Create float tensor directly from list or other data type
-            sigma_init_X = torch.tensor([0.5]*feature_no_gn, device=device) #initialize_sigma_median_heuristic(X_tensor)
-            sigma_init_Y = torch.tensor(0.5, device=device) #initialize_sigma_y_median_heuristic(y_tensor)
-            num_samples = len(feature_imp)
-            selected_indices = np.random.choice(X.shape[0], size=smaple_gX, replace=False)
-            X_gx = X_tensor[selected_indices, :]
-            y_gx = y_tensor[selected_indices]
+            # X_tensor = torch.tensor(X, dtype=torch.float32, device=device)# torch.from_numpy(X).float()  # Convert to float tensor
+            # y_tensor = torch.tensor(y, dtype=torch.float32, device=device)  # Create float tensor directly from list or other data type
+            # sigma_init_X = torch.tensor([0.5]*feature_no_gn, device=device) #initialize_sigma_median_heuristic(X_tensor)
+            # sigma_init_Y = torch.tensor(0.5, device=device) #initialize_sigma_y_median_heuristic(y_tensor)
+            # num_samples = len(feature_imp)
+            # selected_indices = np.random.choice(X.shape[0], size=smaple_gX, replace=False)
+            # X_gx = X_tensor[selected_indices, :]
+            # y_gx = y_tensor[selected_indices]
 
-            start_time = time.time()
-            featuregumbelsparsemax_model = HSICFeatureNetGumbelSparsemax(feature_no_gn, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples * 3, temperature=20).to(device=device)
-            featuregumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE = 200)
-            weights = featuregumbelsparsemax_model(X_gx)[0]
-            hsicfngs_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
-            importance_hsicfngs[i,:] = hsicfngs_sv.detach().cpu().numpy().squeeze()
-            time_hsicfngs[i] = time.time() - start_time
-            print(f"execution time: {time_hsicfngs[i]}")
-            del featuregumbelsparsemax_model
-            memory_cleaning()
-            print(torch.cuda.memory_summary(device=device))
+            # start_time = time.time()
+            # featuregumbelsparsemax_model = HSICFeatureNetGumbelSparsemax(feature_no_gn, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples * 3, temperature=20).to(device=device)
+            # featuregumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE = 200)
+            # weights = featuregumbelsparsemax_model(X_gx)[0]
+            # hsicfngs_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(X_gx, y_gx, featuregumbelsparsemax_model.sigmas, featuregumbelsparsemax_model.sigma_y, weights)
+            # importance_hsicfngs[i,:] = hsicfngs_sv.detach().cpu().numpy().squeeze()
+            # time_hsicfngs[i] = time.time() - start_time
+            # print(f"execution time: {time_hsicfngs[i]}")
+            # del featuregumbelsparsemax_model
+            # memory_cleaning()
+            # print(torch.cuda.memory_summary(device=device))
 
                 ## HSICFeatureNetGumbelSparsemax2
             # start_time = time.time()
@@ -118,15 +118,15 @@ if __name__ == '__main__':
             # print(torch.cuda.memory_summary(device=device))
 
                 ## HSICNetGumbelSparsemax
-            gumbelsparsemax_model = HSICNetGumbelSparsemax(feature_no_gn, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples).to(device=device)
-            gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
-            weights = gumbelsparsemax_model(X_gx)[0]
-            hsicgs_sv, v0 = gumbelsparsemax_model.global_shapley_value(X_gx, y_gx, gumbelsparsemax_model.sigmas, gumbelsparsemax_model.sigma_y, weights)
-            importance_hsicgs[i,:] = hsicgs_sv.detach().cpu().numpy().squeeze()
-            time_hsicgs[i] = time.time() - start_time
-            del gumbelsparsemax_model
-            memory_cleaning()
-            print(torch.cuda.memory_summary(device=device))
+            # gumbelsparsemax_model = HSICNetGumbelSparsemax(feature_no_gn, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples).to(device=device)
+            # gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
+            # weights = gumbelsparsemax_model(X_gx)[0]
+            # hsicgs_sv, v0 = gumbelsparsemax_model.global_shapley_value(X_gx, y_gx, gumbelsparsemax_model.sigmas, gumbelsparsemax_model.sigma_y, weights)
+            # importance_hsicgs[i,:] = hsicgs_sv.detach().cpu().numpy().squeeze()
+            # time_hsicgs[i] = time.time() - start_time
+            # del gumbelsparsemax_model
+            # memory_cleaning()
+            # print(torch.cuda.memory_summary(device=device))
 
                 ## HSICNetGumbelSparsemax2
             # gumbelsparsemax_model = HSICNetGumbelSparsemax(feature_no_gn, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples*2).to(device=device)   
@@ -140,15 +140,15 @@ if __name__ == '__main__':
             # print(torch.cuda.memory_summary(device=device))
 
             ## HSIC lasso 
-            # start_time = time.time()
-            # hsic_lasso = HSICLasso()
-            # hsic_lasso.input(X,y)
-            # hsic_lasso.regression(feature_no_gn, covars=X)
-            # hsic_ind = hsic_lasso.get_index()
-            # init_ranks = (len(hsic_ind) + (feature_no_gn - 1/2 - len(hsic_ind))/2) * np.ones((feature_no_gn,))
-            # init_ranks[hsic_ind] = np.arange(1,len(hsic_ind)+1)
-            # importance_hsiclasso[i,:] = hsicgs_sv.detach().numpy().squeeze()  
-            # time_hsiclasso[i] = time.time() - start_time 
+            start_time = time.time()
+            hsic_lasso = HSICLasso()
+            hsic_lasso.input(X,y)
+            hsic_lasso.regression(feature_no_gn, covars=X)
+            hsic_ind = hsic_lasso.get_index()
+            init_ranks = (len(hsic_ind) + (feature_no_gn - 1/2 - len(hsic_ind))/2) * np.ones((feature_no_gn,))
+            init_ranks[hsic_ind] = np.arange(1,len(hsic_ind)+1)
+            importance_hsiclasso[i,:] = init_ranks
+            time_hsiclasso[i] = time.time() - start_time 
 
             ## Mutual Informmation Importance
             start_time = time.time()
