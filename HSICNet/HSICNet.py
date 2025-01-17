@@ -190,7 +190,6 @@ class HSICNet(nn.Module):
         n, d = X_train.shape
         n_samples = X_samples.shape[0]
 
-       
         sv = torch.zeros(n_samples, d)
         hsic_values = torch.zeros(n_samples)
 
