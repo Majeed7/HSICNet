@@ -111,9 +111,10 @@ act_fun_layer = torch.nn.Sigmoid
 
 if __name__ == '__main__':
         
-    dataset_names1 = ["breast_cancer", "sonar", "waveform", "nomao", "steel"] #  
+    dataset_names1 = ["breast_cancer", "sonar", "nomao", "steel"] #  
     dataset_names2 = ["breast_cancer_wisconsin", "skillcraft", "ionosphere", "sml", "pol"]
-    dataset_names3 = ['parkinson', 'keggdirected', "pumadyn32nm", "crime", "gas", "waveform"]    # Main running part of the script
+    dataset_names3 = ['parkinson', 'keggdirected', "pumadyn32nm", "crime", "gas", "waveform"]
+    dataset_names4 = ['autos', 'bike', 'keggundirected']
 
         # Check if an argument is passed
     if len(sys.argv) < 2:
@@ -135,6 +136,8 @@ if __name__ == '__main__':
                 dataset_names = dataset_names2
             elif ds_index == 3:
                 dataset_names = dataset_names3
+            elif ds_index == 4:
+                dataset_names = dataset_names4
 
         except ValueError:
             # If it fails, try converting to a float
