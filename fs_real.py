@@ -114,7 +114,7 @@ if __name__ == '__main__':
         
     dataset_names1 = ["breast_cancer", "sonar", "nomao", "steel"] #  
     dataset_names2 = ["breast_cancer_wisconsin", "skillcraft", "ionosphere", "sml", "pol"]
-    dataset_names3 = ['parkinson', 'keggdirected', "pumadyn32nm", "crime", "gas", "waveform"]
+    dataset_names3 = ['parkinson', 'keggdirected', "pumadyn32nm", "crime", "gas"]
     dataset_names4 = ['autos', 'bike', 'keggundirected']
 
         # Check if an argument is passed
@@ -146,7 +146,7 @@ if __name__ == '__main__':
             dataset_names = dataset_names1
             print("Cannot process the value. Using default value: 0.1")
 
-
+    dataset_names = ['keggundirected']
     # Main running part of the script
     for dataset_name in dataset_names:
         print(f"\nProcessing dataset: {dataset_name}")
@@ -269,7 +269,7 @@ if __name__ == '__main__':
             sheet.append([selector, execution_time] + list(global_importance))
 
         # Save the Excel file after processing each dataset
-        excel_filename = f"real_fs_feature_importance_{ds_index}_{mode}.xlsx"
+        excel_filename = f"real_fs_feature_importance_{ds_index}_{mode}_2.xlsx"
         wb.save(excel_filename)
         print(f"Global feature importance for {dataset_name} saved to {excel_filename}")
     
