@@ -7,6 +7,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.multiclass import type_of_target
 import copy 
 
@@ -157,7 +158,9 @@ if __name__ == '__main__':
 
         # Determine if the dataset is for classification or regression
         mode = "classification" if type_of_target(y) in ["binary", "multiclass"] else "regression"
-        if mode == "classification": continue 
+        if mode == "classification": 
+            y = LabelEncoder().fit_transform(y) 
+        else: continue
 
         # Split the dataset into training and testing sets
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
@@ -165,7 +168,9 @@ if __name__ == '__main__':
 
         # Convert the data to PyTorch tensors
         X_tensor = torch.tensor(X_train, dtype=torch.float32).to(device=device)
-        y_tensor = torch.tensor(y_train, dtype=torch.float32).to(device=device)
+        y_tensor = torch.tensor(y_train, dtype=torch.float32).to(device=device) if mode != "classification" else \
+                    torch.tensor(y_train, dtype=torch.int32).to(device=device)
+
         sigma_init_X = torch.tensor([0.5]*d, device=device) #initialize_sigma_median_heuristic(X_tensor)
         sigma_init_Y = torch.tensor(0.5, device=device) #initialize_sigma_y_median_heuristic(y_tensor)
 
@@ -193,7 +198,7 @@ if __name__ == '__main__':
             if selector == "HSICFeatureNetGumbelSparsemax":
                 featuregumbelsparsemax_model = HSICFeatureNetGumbelSparsemax(
                     d, feature_layers, act_fun_featlayer, layers,
-                    act_fun_layer, sigma_init_X, sigma_init_Y, num_samples=10, temperature=20).to(device=device)
+                    act_fun_layer, sigma_init_X, sigma_init_Y, num_samples=10, temperature=20, mode=mode).to(device=device)
                 featuregumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
                 weights = featuregumbelsparsemax_model(X_gx)[0]
                 hsicfngs_sv, v0 = featuregumbelsparsemax_model.global_shapley_value(
@@ -208,7 +213,7 @@ if __name__ == '__main__':
 
             elif selector == "HSICNetGumbelSparsemax":
                 gumbelsparsemax_model = HSICNetGumbelSparsemax(
-                    d, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples=10, temperature=20).to(device=device)
+                    d, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples=10, temperature=20, mode=mode).to(device=device)
                 gumbelsparsemax_model.train_model(X_tensor, y_tensor, num_epochs=epoch, BATCH_SIZE=200)
                 weights = gumbelsparsemax_model(X_gx)[0]
                 hsicgs_sv, v0 = gumbelsparsemax_model.global_shapley_value(
@@ -264,7 +269,7 @@ if __name__ == '__main__':
             sheet.append([selector, execution_time] + list(global_importance))
 
         # Save the Excel file after processing each dataset
-        excel_filename = f"real_fs_feature_importance_{ds_index}.xlsx"
+        excel_filename = f"real_fs_feature_importance_{ds_index}_{mode}.xlsx"
         wb.save(excel_filename)
         print(f"Global feature importance for {dataset_name} saved to {excel_filename}")
     

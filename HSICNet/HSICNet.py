@@ -17,8 +17,14 @@ class HSICNet(nn.Module):
         input_dim: the input dimensions of the data
         layers: List[int]: a list of integers, each indicating the number of neurons of a layer 
     '''
-    def __init__(self, input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y):
+    def __init__(self, input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y, **params):
         super().__init__()
+
+        self.mode = params.get('mode', 'regression')
+        if self.mode == 'classification':
+            self.kernel_y_func = self.categorical_kernel
+        else:
+            self.kernel_y_func = self.rbf_kernel_y
 
         self.layers = nn.ModuleList()
 
@@ -128,7 +134,7 @@ class HSICNet(nn.Module):
         return torch.exp(-dists / (2 * sigma_y**2))
 
     # Categorical kernel for classification problems
-    def categorical_kernel(y1, y2):
+    def categorical_kernel(self, y1, y2, sigma_y=None):
         """
         Compute the categorical kernel between two tensors of categorical variables.
 
@@ -151,7 +157,7 @@ class HSICNet(nn.Module):
     # The Loss function based on HSIC
     def hsic_loss_adaptive(self, X, y, s, sigmas, sigma_y):
         X_kernel = self.anova_kernel(X, X, s, sigmas)
-        y_kernel = self.rbf_kernel_y(y, y, sigma_y)
+        y_kernel = self.kernel_y_func(y, y, sigma_y) #self.rbf_kernel_y(y, y, sigma_y)
 
         # Centering the kernels
         n = X.size(0)
@@ -373,8 +379,8 @@ Training a network with maximizing HSIC with Gumbel Sparsemax
 """
 
 class HSICNetGumbelSparsemax(HSICNet):
-    def __init__(self, input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples, temperature=10):
-        super(HSICNetGumbelSparsemax, self).__init__(input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y)
+    def __init__(self, input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples, temperature=10, **params):
+        super(HSICNetGumbelSparsemax, self).__init__(input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y, **params)
         
         self.num_samples = num_samples
         self.temperature = temperature
@@ -391,8 +397,8 @@ class HSICNetGumbelSparsemax(HSICNet):
 Training a network with maximizing HSIC with Gumbel Softmax Layer
 """
 class HSICNetGumbelSoftmax(HSICNet):
-    def __init__(self, input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples, temperature=.1):
-        super(HSICNetGumbelSoftmax, self).__init__(input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y)
+    def __init__(self, input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples, temperature=.1, **params):
+        super(HSICNetGumbelSoftmax, self).__init__(input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y, **params)
         
         self.num_samples = num_samples
         self.temperature = temperature
@@ -414,8 +420,8 @@ Training a network with maximizing HSIC with sparsemax wihtout sampling with Gum
 
 # Neural Network with Sparsemax
 class HSICNetSparsemax(HSICNet):
-    def __init__(self, input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y):
-        super(HSICNetSparsemax, self).__init__(input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y)
+    def __init__(self, input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y, **params):
+        super(HSICNetSparsemax, self).__init__(input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y, **params)
         
         self.sparsemax = Sparsemax(dim=-1)
 

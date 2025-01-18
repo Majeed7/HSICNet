@@ -15,8 +15,8 @@ class HSICFeatureNet(HSICNet):
         - input_dim: the input dimensions of the data
         - layers: List[int]: a list of integers, each indicating the number of neurons of a layer for each feature network
     '''
-    def __init__(self, input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y):
-        super(HSICFeatureNet, self).__init__(input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y)
+    def __init__(self, input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, **params):
+        super(HSICFeatureNet, self).__init__(input_dim, layers, act_fun_layer, sigma_init_X, sigma_init_Y, **params)
 
         if act_fun_featlayer is None: act_fun_featlayer = nn.Sigmoid
         self.act_fun_featlayer = act_fun_featlayer
@@ -81,8 +81,8 @@ Training a network with maximizing HSIC with Gumbel Sparsemax
 """
 
 class HSICFeatureNetGumbelSparsemax(HSICFeatureNet):
-    def __init__(self, input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples, temperature=10):
-        super(HSICFeatureNetGumbelSparsemax, self).__init__(input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y)
+    def __init__(self, input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples, temperature=10, **params):
+        super(HSICFeatureNetGumbelSparsemax, self).__init__(input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, **params)
         
         self.num_samples = num_samples
         self.temperature = temperature
@@ -100,8 +100,8 @@ Training a network with maximizing HSIC with Gumbel Softmax
 """
 
 class HSICFeatureNetGumbelSoftmax(HSICFeatureNet):
-    def __init__(self, input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples):
-        super(HSICFeatureNetGumbelSoftmax, self).__init__(input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y)
+    def __init__(self, input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, num_samples, **params):
+        super(HSICFeatureNetGumbelSoftmax, self).__init__(input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, **params)
         
         self.num_samples = num_samples
         
@@ -119,8 +119,8 @@ Training a network with maximizing HSIC with Sparsemax only
 """
 
 class HSICFeatureNetSparsemax(HSICFeatureNet):
-    def __init__(self, input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y):
-        super(HSICFeatureNetSparsemax, self).__init__(input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y)
+    def __init__(self, input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, **params):
+        super(HSICFeatureNetSparsemax, self).__init__(input_dim, feature_layers, act_fun_featlayer, layers, act_fun_layer, sigma_init_X, sigma_init_Y, **params)
         
         self.sparsemax = Sparsemax(dim=-1)
 
