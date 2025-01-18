@@ -125,7 +125,7 @@ def load_dataset_basic(name):
         X = data.iloc[:, :-1]
         y = data.iloc[:, -1]
         X_down, _, y_down, _ = train_test_split(X.values, y.values, train_size=0.25, random_state=42)
-        return X.down, y.down
+        return X_down, y_down
     
     elif name == "parkinson": #regression
         data = pd.read_csv('data/parkinson.csv.gz', sep=',')
