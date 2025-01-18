@@ -117,7 +117,7 @@ if __name__ == '__main__':
     dataset_names3 = ['parkinson', 'keggdirected', "pumadyn32nm", "crime", "gas"]
     dataset_names4 = ['autos', 'bike', 'keggundirected']
 
-        # Check if an argument is passed
+    # Check if an argument is passed
     if len(sys.argv) < 2:
         print("No argument passed. Using default value: 1")
         ds_index = 1
