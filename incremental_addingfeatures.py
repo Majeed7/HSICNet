@@ -151,6 +151,7 @@ def main():
     results_wb = Workbook()
 
     # Check if an argument is passed
+    ds_index = 1
     if len(sys.argv) < 2:
         print("No argument passed. Using default value: 1")
         ds_index = 1
@@ -219,7 +220,7 @@ def main():
                 result_sheet.append(std_row)
 
             # Save the results to a new Excel file
-            results_wb.save(f"class_svm_feature_selector_results.xlsx")
+            results_wb.save(f"class_svm_feature_selector_results_{ds_index}.xlsx")
 
         except Exception as e:
             print(f"{sheet_name} could not be processed! Error: {e}")
