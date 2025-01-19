@@ -23,6 +23,68 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 import warnings
 warnings.filterwarnings("ignore")
 
+from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.metrics import accuracy_score, mean_squared_error
+import numpy as np
+
+def train_rf(X, y, n_split=5):
+    """
+    Trains a Random Forest model using GridSearchCV and returns the performance score.
+    
+    Args:
+    - X: Features data (input matrix)
+    - y: Target labels
+    
+    Returns:
+    - best_score: Best performance score (accuracy for classification, MSE for regression)
+    """
+    
+    # Check if the problem is classification or regression
+    problem_type = type_of_target(y)
+    
+    if problem_type == 'continuous' or problem_type == 'unknown':
+        # If the target variable is numeric, treat it as regression
+        model = RandomForestRegressor(random_state=42)
+        scoring = 'neg_mean_squared_error'  # For regression, we use negative MSE as scoring
+    else:
+        # If the target variable is categorical, treat it as classification
+        model = RandomForestClassifier(random_state=42)
+        scoring = 'accuracy'  # For classification, use accuracy as scoring
+    
+    # Hyperparameter grid
+    param_grid = {
+        'n_estimators': [10, 50, 100],
+        'max_depth': [None, 10, 20, 30],
+        'min_samples_split': [2, 5, 10]
+    }
+    
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Initialize GridSearchCV with KFold cross-validation
+    grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=n_split, scoring=scoring, n_jobs=-1)
+    
+    # Fit the model using GridSearchCV
+    grid_search.fit(X_train, y_train)
+    
+    # Get the best model and evaluate on the test set
+    best_model = grid_search.best_estimator_
+    
+    # Make predictions and evaluate the model
+    y_pred = best_model.predict(X_test)
+    
+    if isinstance(best_model, RandomForestClassifier):
+        # If classification, use accuracy score
+        best_score = accuracy_score(y_test, y_pred)
+    else:
+        # If regression, use mean squared error
+        best_score = mean_squared_error(y_test, y_pred)
+    
+    # Return the best score
+    return best_score, grid_search.cv_results_['mean_test_score'], grid_search.cv_results_['std_test_score']
+
+
 def train_gp(X, y, n_splits=5):
     """
     Train a Gaussian Process using k-fold cross-validation.
@@ -124,11 +186,12 @@ def select_features_incrementally(X, y, ranked_features):
         X_subset = X[:, selected_features]
 
         # Train the GP model on the selected features and evaluate
-        avg_score, std_score = train_gp(X_subset, y)
+        best_score, avg_score, std_score = train_rf(X_subset, y) # avg_score, std_score = train_gp(X_subset, y)
 
         # Track performance for this number of selected features
         performance.append({
             'num_features': i,
+            'best_score': best_score,
             'avg_score': avg_score,
             'std_score': std_score
         })
@@ -211,16 +274,20 @@ def main():
                 # Incrementally evaluate performance with the selected features
                 performance = select_features_incrementally(X, y, ranked_features)
 
-                # First row for the average scores
+                # First row for the best scores
+                avg_row = [feature_selector + "_best"] + [result['best_score'] for result in performance]
+                result_sheet.append(avg_row)
+
+                # Second row for the average scores
                 avg_row = [feature_selector + "_avg"] + [result['avg_score'] for result in performance]
                 result_sheet.append(avg_row)
 
-                # Second row for the standard deviation scores
+                # Third row for the standard deviation scores
                 std_row = [feature_selector + "_std"] + [result['std_score'] for result in performance]
                 result_sheet.append(std_row)
 
             # Save the results to a new Excel file
-            results_wb.save(f"class_svm_feature_selector_results_{ds_index}.xlsx")
+            results_wb.save(f"class_svm_feature_selector_results_{ds_index}_rf.xlsx")
 
         except Exception as e:
             print(f"{sheet_name} could not be processed! Error: {e}")
