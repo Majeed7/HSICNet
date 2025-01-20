@@ -23,6 +23,8 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 import warnings
 warnings.filterwarnings("ignore")
 
+from sklearn.utils import shuffle
+
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import accuracy_score, mean_squared_error
@@ -84,6 +86,59 @@ def train_rf(X, y, n_split=5):
     # Return the best score
     return best_score, grid_search.cv_results_['mean_test_score'], grid_search.cv_results_['std_test_score']
 
+def train_signle_gp(X, y, test_size=0.2):
+    """
+    Train a Gaussian Process on a train-test split.
+
+    Parameters:
+        X (array-like): Feature matrix of shape (n_samples, n_features).
+        y (array-like): Target vector of shape (n_samples,).
+        test_size (float): Proportion of data to include in the test set (default is 0.2).
+
+    Returns:
+        test_score (float): Performance score on the test set (MSE or Accuracy).
+    """
+
+    # Shuffle data before splitting
+    X, y = shuffle(X, y, random_state=42)
+
+    # Check the type of problem (classification or regression)
+    problem_type = type_of_target(y)
+    
+    if problem_type == 'continuous' or problem_type == 'unknown':
+        is_classification = False  # Regression problem
+    else:
+        is_classification = True   # Classification problem
+
+    # Define the kernel for GP
+    kernel = C(1.0, (1e-4, 1e1)) * RBF(1.0, (1e-4, 1e1))
+
+    # Initialize the model
+    if is_classification:
+        gp = GaussianProcessClassifier(kernel=kernel, optimizer='fmin_l_bfgs_b')
+    else:
+        gp = GaussianProcessRegressor(kernel=kernel, optimizer='fmin_l_bfgs_b')
+
+    # Split the data into training and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
+
+    # Train the GP on the training data
+    gp.fit(X_train, y_train)
+
+    # Make predictions on the test data
+    y_pred = gp.predict(X_test)
+
+    # Evaluate based on whether it's regression or classification
+    if is_classification:
+        # Calculate Accuracy for classification
+        test_score = accuracy_score(y_test, y_pred)
+        print(f"Test Accuracy: {test_score}")
+    else:
+        # Calculate Mean Squared Error for regression
+        test_score = mean_squared_error(y_test, y_pred)
+        print(f"Test MSE: {test_score}")
+
+    return test_score
 
 def train_gp(X, y, n_splits=5):
     """
@@ -176,9 +231,9 @@ def select_features_incrementally(X, y, ranked_features):
     selected_features = []
 
     total_features = X.shape[1]
-    i = math.ceil(total_features * 0.1)  # Start by selecting the top 10% of features
+    i = math.ceil(total_features * 0.05)  # Start by selecting the top 10% of features
 
-    while i <= total_features:
+    while i <= (total_features / 2):
         # Select the top `i` ranked features
         selected_features = ranked_features[:i]
 
@@ -186,12 +241,12 @@ def select_features_incrementally(X, y, ranked_features):
         X_subset = X[:, selected_features]
 
         # Train the GP model on the selected features and evaluate
-        best_score, avg_score, std_score = train_rf(X_subset, y) # avg_score, std_score = train_gp(X_subset, y)
+        avg_score, std_score = train_gp(X_subset, y) # avg_score, std_score = train_single_gp(X_subset, y) # best_score, avg_score, std_score = train_rf(X_subset, y) # 
 
         # Track performance for this number of selected features
         performance.append({
             'num_features': i,
-            'best_score': best_score,
+            #'best_score': best_score,
             'avg_score': avg_score,
             'std_score': std_score
         })
@@ -200,8 +255,8 @@ def select_features_incrementally(X, y, ranked_features):
         i = math.ceil(total_features * 0.05 * (len(performance) + 1))  # Add 10% more each time
 
         # Ensure i does not exceed the total number of features
-        if i > total_features:
-            i = total_features
+        if i > (total_features / 2):
+            break #i = int(total_features / 2)
 
     return performance
 
@@ -275,8 +330,8 @@ def main():
                 performance = select_features_incrementally(X, y, ranked_features)
 
                 # First row for the best scores
-                avg_row = [feature_selector + "_best"] + [result['best_score'] for result in performance]
-                result_sheet.append(avg_row)
+                #avg_row = [feature_selector + "_best"] + [result['best_score'] for result in performance]
+                #result_sheet.append(avg_row)
 
                 # Second row for the average scores
                 avg_row = [feature_selector + "_avg"] + [result['avg_score'] for result in performance]
@@ -287,7 +342,7 @@ def main():
                 result_sheet.append(std_row)
 
             # Save the results to a new Excel file
-            results_wb.save(f"class_svm_feature_selector_results_{ds_index}_rf.xlsx")
+            results_wb.save(f"incremental_feature_{ds_index}_gp.xlsx")
 
         except Exception as e:
             print(f"{sheet_name} could not be processed! Error: {e}")

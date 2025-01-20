@@ -28,8 +28,8 @@ parameter=$1  # $1 refers to the first argument passed to the script
 
 # Check if a parameter is passed
 if [ -z "$parameter" ]; then
-    echo "No argument passed. Using default value: 0.1"
-    parameter=0.1  # Default value
+    echo "No argument passed. Using default value: 1"
+    parameter=1  # Default value
 fi
 
 # Run the Python script
