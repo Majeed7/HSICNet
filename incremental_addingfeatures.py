@@ -27,7 +27,7 @@ from sklearn.utils import shuffle
 
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.metrics import accuracy_score, mean_absolute_percentage_error
 import numpy as np
 
 def train_rf(X, y, n_split=5):
@@ -56,8 +56,8 @@ def train_rf(X, y, n_split=5):
     
     # Hyperparameter grid
     param_grid = {
-        'n_estimators': [10, 50, 100],
-        'max_depth': [None, 10, 20, 30],
+        'n_estimators': [100, 200, 500],
+        'max_depth': [None, 10, 20],
         'min_samples_split': [2, 5, 10]
     }
     
@@ -81,7 +81,7 @@ def train_rf(X, y, n_split=5):
         best_score = accuracy_score(y_test, y_pred)
     else:
         # If regression, use mean squared error
-        best_score = mean_squared_error(y_test, y_pred)
+        best_score = calculate_regression_scores(y_test, y_pred)["MAPE"] #mean_absolute_percentage_error(y_test, y_pred)
     
     # Return the best score
     return best_score, grid_search.cv_results_['mean_test_score'], grid_search.cv_results_['std_test_score']
@@ -222,7 +222,7 @@ def calculate_classification_scores(y_true, y_pred):
 
 def calculate_regression_scores(y_true, y_pred):
     """Calculate regression MSE."""
-    return {"MSE": mean_squared_error(y_true, y_pred)}
+    return {"MSE": mean_squared_error(y_true, y_pred), "MAPE": mean_absolute_percentage_error(y_true, y_pred)}
 
 def select_features_incrementally(X, y, ranked_features):
     """Select features incrementally and evaluate performance."""
@@ -241,12 +241,12 @@ def select_features_incrementally(X, y, ranked_features):
         X_subset = X[:, selected_features]
 
         # Train the GP model on the selected features and evaluate
-        avg_score, std_score = train_gp(X_subset, y) # avg_score, std_score = train_single_gp(X_subset, y) # best_score, avg_score, std_score = train_rf(X_subset, y) # 
+        best_score, avg_score, std_score = train_rf(X_subset, y) #  avg_score, std_score = train_gp(X_subset, y) # avg_score, std_score = train_single_gp(X_subset, y) # 
 
         # Track performance for this number of selected features
         performance.append({
             'num_features': i,
-            #'best_score': best_score,
+            'best_score': best_score,
             'avg_score': avg_score,
             'std_score': std_score
         })
@@ -330,19 +330,19 @@ def main():
                 performance = select_features_incrementally(X, y, ranked_features)
 
                 # First row for the best scores
-                #avg_row = [feature_selector + "_best"] + [result['best_score'] for result in performance]
-                #result_sheet.append(avg_row)
+                best_row = [feature_selector + "_best"] + [result['best_score'] for result in performance]
+                result_sheet.append(best_row)
 
                 # Second row for the average scores
-                avg_row = [feature_selector + "_avg"] + [result['avg_score'] for result in performance]
-                result_sheet.append(avg_row)
+                # avg_row = [feature_selector + "_avg"] + [result['avg_score'] for result in performance]
+                # result_sheet.append(avg_row)
 
-                # Third row for the standard deviation scores
-                std_row = [feature_selector + "_std"] + [result['std_score'] for result in performance]
-                result_sheet.append(std_row)
+                # # Third row for the standard deviation scores
+                # std_row = [feature_selector + "_std"] + [result['std_score'] for result in performance]
+                # result_sheet.append(std_row)
 
             # Save the results to a new Excel file
-            results_wb.save(f"incremental_feature_{ds_index}_gp.xlsx")
+            results_wb.save(f"incremental_feature_{ds_index}_rf.xlsx")
 
         except Exception as e:
             print(f"{sheet_name} could not be processed! Error: {e}")
