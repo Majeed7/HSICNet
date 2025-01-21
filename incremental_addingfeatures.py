@@ -56,7 +56,7 @@ def train_rf(X, y, n_split=5):
     
     # Hyperparameter grid
     param_grid = {
-        'n_estimators': [100, 200, 500],
+        'n_estimators': [500, 1000],
         'max_depth': [None, 10, 20],
         'min_samples_split': [2, 5, 10]
     }
@@ -167,9 +167,9 @@ def train_gp(X, y, n_splits=5):
 
     # Initialize the model
     if is_classification:
-        gp = GaussianProcessClassifier(kernel=kernel, optimizer='fmin_l_bfgs_b')
+        gp = GaussianProcessClassifier(kernel=kernel, optimizer='fmin_l_bfgs_b', n_jobs=-1)
     else:
-        gp = GaussianProcessRegressor(kernel=kernel, optimizer='fmin_l_bfgs_b')
+        gp = GaussianProcessRegressor(kernel=kernel, optimizer='fmin_l_bfgs_b', j_jobs=-1)
 
     # Setup K-fold Cross Validation
     kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
@@ -297,8 +297,8 @@ def main():
     # Process datasets in the Excel sheet
     for sheet_name in sheetnames:
         try:
-            if sheet_name in ['keggdirected']: 
-                continue 
+            # if sheet_name in ['keggdirected']: 
+            #     continue 
             print(f"Processing dataset: {sheet_name}")
             sheet = wb[sheet_name]
 
@@ -319,7 +319,7 @@ def main():
             # Process each feature selector (row) in the sheet
             for row in sheet.iter_rows(min_row=2, values_only=True):
                 feature_selector = row[0]
-                if feature_selector is None:   break
+                if feature_selector is None: break
                 feature_importance = np.array(row[2:])
 
                 # Use the ranking directly from the feature_importance array
@@ -342,7 +342,7 @@ def main():
                 # result_sheet.append(std_row)
 
             # Save the results to a new Excel file
-            results_wb.save(f"incremental_feature_{ds_index}_rf.xlsx")
+            results_wb.save(f"incremental_feature_{ds_index}_rf_bigestimators.xlsx")
 
         except Exception as e:
             print(f"{sheet_name} could not be processed! Error: {e}")
