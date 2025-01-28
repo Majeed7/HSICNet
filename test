@@ -1,0 +1,81 @@
+\begin{table*}
+\centering
+\tiny
+\caption{Precision and Recall for Methods Across Independent Datasets}
+\begin{tabular}{l|rr|rr|rr|rr|rr|rr|rr|rr}
+& \multicolumn{2}{c}{Syn 1} & \multicolumn{2}{c}{Syn 2} & \multicolumn{2}{c}{Syn 3} & \multicolumn{2}{c}{Syn 4} & \multicolumn{2}{c}{Syn 5} & \multicolumn{2}{c}{Syn 6} & \multicolumn{2}{c}{Syn 7} & \multicolumn{2}{c}{Syn 8} \\ 
+& Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall \\ \hline
+\toprule
+FuHSIC                 & 0.999 & 1.000 & 1.000 & 1.000 & 0.994 & 1.000 & 0.999 & 0.750 & 0.999 & 1.000 & 0.998 & 0.806  \\
+invase                 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & 0.500 & 1.000 & 0.500 & 1.000 & 0.407 & NaN   & 0.000  \\
+L2x                    & 0.738 & 0.738 & 0.460 & 0.460 & 0.500 & 0.500 & 0.500 & 0.500 & 0.149 & 0.149 & 0.265 & 0.165  \\
+l2x\_2                 & 0.500 & 1.000 & 0.500 & 1.000 & 0.440 & 0.880 & 0.328 & 0.657 & 0.185 & 0.371 & 0.158 & 0.517  \\
+shap                   & 1.000 & 0.438 & 1.000 & 0.514 & 1.000 & 0.446 & NaN   & 0.000 & 0.430 & 0.160 & 0.068 & 0.158  \\
+bishap                 & 1.000 & 0.400 & 1.000 & 0.403 & 1.000 & 0.461 & NaN   & 0.000 & 0.467 & 0.168 & 0.063 & 0.153  \\
+lime                   & 0.163 & 0.815 & 0.162 & 0.806 & 0.134 & 0.672 & 0.199 & 0.998 & 0.149 & 0.991 & 0.358 & 0.657  \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+\begin{table*}
+\centering
+\tiny
+\caption{Precision and Recall for Methods Across Independent Datasets}
+\begin{tabular}{l|rr|rr|rr|rr|rr|rr|rr|rr}
+& \multicolumn{2}{c}{Syn 1} & \multicolumn{2}{c}{Syn 2} & \multicolumn{2}{c}{Syn 3} & \multicolumn{2}{c}{Syn 4} & \multicolumn{2}{c}{Syn 5} & \multicolumn{2}{c}{Syn 6} & \multicolumn{2}{c}{Syn 7} & \multicolumn{2}{c}{Syn 8} \\ 
+& Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall \\ \hline
+\toprule
+HSIC\_FN\_GS           & 0.9923 & 1.0000 & 0.9852 & 1.0000 & 0.9965 & 0.5003 & 0.9793 & 0.5019 & 0.9975 & 1.0000 & 0.9953 & 0.8003 \\
+HSIC\_FN\_GS2          & 0.9874 & 1.0000 & 0.9862 & 1.0000 & 0.9627 & 1.0000 & 0.9631 & 0.5025 & 0.9932 & 1.0000 & 0.9902 & 0.8011 \\
+HSIC\_gumbsparsemax    & 0.9993 & 1.0000 & 1.0000 & 1.0000 & 0.9940 & 1.0000 & 0.9993 & 0.5000 & 0.9997 & 1.0000 & 0.9985 & 0.8061 \\
+HSIC\_gumbsparsemax2   & 0.9993 & 1.0000 & 0.9990 & 1.0000 & 0.9930 & 0.5000 & 0.9968 & 0.5000 & 0.9977 & 1.0000 & 0.9977 & 0.8264 \\
+HSIC\_gumbsoftmax      & 1.0000 & 0.8855 & 0.9994 & 0.8865 & 0.9983 & 0.8755 & 0.4362 & 0.5623 & 0.9977 & 0.8660 & 0.4732 & 0.6656 \\
+HSIC\_gumbsoftmax2     & 0.3391 & 0.8680 & 0.3512 & 0.8745 & 0.2878 & 0.7600 & 0.2582 & 0.6725 & 0.3007 & 0.8010 & 0.2985 & 0.7460 \\
+HSIC\_sparsemax        & 1.0000 & 0.5000 & 0.0000 & 0.0000 & 0.0000 & 0.0000 & 1.0000 & 0.2500 & 1.0000 & 0.5590 & 1.0000 & 0.6000 \\ \hline
+\bottomrule
+\end{tabular}
+\end{table*}
+
+----------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------
+
+\begin{table*}
+\centering
+\tiny
+\caption{Precision and Recall for Methods Across Datasets}
+\begin{tabular}{l|rr|rr|rr|rr|rr|rr|rr|rr}
+& \multicolumn{2}{c}{Syn 1} & \multicolumn{2}{c}{Syn 2} & \multicolumn{2}{c}{Syn 3} & \multicolumn{2}{c}{Syn 4} & \multicolumn{2}{c}{Syn 5} & \multicolumn{2}{c}{Syn 6} & \multicolumn{2}{c}{Syn 7} & \multicolumn{2}{c}{Syn 8} \\ 
+& Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall \\ \hline
+\toprule
+FuHSIC                 & 0.999 & 1.000 & 0.999 & 1.000 & 0.994 & 1.000 & 0.999 & 1.000 & 0.998 & 0.500 & 0.998 & 0.616  \\
+invase                 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & 0.500 & NaN   & 0.000 & 1.000 & 0.500 & 1.000 & 0.351  \\
+L2x                    & 0.555 & 0.555 & 0.362 & 0.362 & 0.500 & 0.500 & 0.076 & 0.076 & 0.058 & 0.058 & 0.492 & 0.492  \\
+l2x\_2                 & 0.500 & 1.000 & 0.500 & 1.000 & 0.250 & 0.500 & 0.174 & 0.349 & 0.250 & 0.501 & 0.340 & 0.679  \\
+shap                   & 1.000 & 0.417 & 1.000 & 0.393 & 1.000 & 0.420 & 0.397 & 0.093 & NaN   & 0.000 & 0.032 & 0.100  \\
+bishap                 & 1.000 & 0.337 & 1.000 & 0.335 & 1.000 & 0.395 & 0.422 & 0.095 & NaN   & 0.000 & 0.032 & 0.100  \\
+lime                   & 0.152 & 0.762 & 0.131 & 0.772 & 0.131 & 0.657 & 0.156 & 0.923 & 0.249 & 0.623 & 0.265 & 0.662  \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}
+\centering
+\tiny
+\caption{Precision and Recall for Methods Across Datasets}
+\begin{tabular}{l|rr|rr|rr|rr|rr|rr|rr|rr}
+& \multicolumn{2}{c}{Syn 1} & \multicolumn{2}{c}{Syn 2} & \multicolumn{2}{c}{Syn 3} & \multicolumn{2}{c}{Syn 4} & \multicolumn{2}{c}{Syn 5} & \multicolumn{2}{c}{Syn 6} & \multicolumn{2}{c}{Syn 7} & \multicolumn{2}{c}{Syn 8} \\ 
+& Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall & Precision & Recall \\ \hline
+\toprule
+HSIC\_FN\_GS           & 0.992 & 1.000 & 0.985 & 1.000 & 0.997 & 0.500 & 0.997 & 1.000 & 0.992 & 0.750 & 0.995 & 0.806  \\
+HSIC\_FN\_GS2          & 0.986 & 1.000 & 0.981 & 1.000 & 0.968 & 1.000 & 0.996 & 1.000 & 0.983 & 0.750 & 0.992 & 0.802  \\
+HSIC\_gumbsparsemax    & 0.999 & 1.000 & 0.999 & 1.000 & 0.994 & 1.000 & 0.999 & 1.000 & 0.998 & 0.500 & 0.998 & 0.616  \\
+HSIC\_gumbsparsemax2   & 0.999 & 1.000 & 0.997 & 1.000 & 0.993 & 0.500 & 0.998 & 1.000 & 0.996 & 0.501 & 0.997 & 0.806  \\
+HSIC\_gumbsoftmax      & 1.000 & 0.891 & 0.999 & 0.895 & 0.823 & 0.784 & 0.864 & 0.838 & 0.657 & 0.747 & 0.483 & 0.678  \\
+HSIC\_gumbsoftmax2     & 0.335 & 0.842 & 0.359 & 0.865 & 0.288 & 0.736 & 0.308 & 0.810 & 0.277 & 0.710 & 0.298 & 0.736  \\
+HSIC\_sparsemax        & 1.000 & 0.500 & 0.000 & 0.000 & 1.000 & 0.500 & 0.000 & 0.000 & 1.000 & 0.250 & 1.000 & 0.400  \\ 
+\bottomrule
+\end{tabular}
+\end{table*}
+
